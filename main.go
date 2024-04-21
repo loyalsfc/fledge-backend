@@ -10,6 +10,8 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
 	"github.com/loyalsfc/fledge-backend/internal/database"
+
+	_ "github.com/lib/pq"
 )
 
 type apiCfg struct {
@@ -28,7 +30,7 @@ func main() {
 	conn, err := sql.Open("postgres", dbString)
 
 	if err != nil {
-		log.Panic("Database error")
+		log.Fatal("Database error", err)
 	}
 
 	db := database.New(conn)
@@ -49,6 +51,9 @@ func main() {
 	v1Router.Get("/status", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Connected"))
 	})
+
+	v1Router.Get("/users", apiCfg.getUsers)
+	v1Router.Post("/user", apiCfg.createUser)
 
 	router.Mount("/v1", v1Router)
 
