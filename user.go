@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/loyalsfc/fledge-backend/internal/database"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type parameters struct {
@@ -47,7 +48,7 @@ func (apiCfg *apiCfg) createUser(w http.ResponseWriter, r *http.Request) {
 		Name:     params.Name,
 		Email:    params.Email,
 		Username: username,
-		Password: params.Password,
+		Password: passwordEncryption(params.Password),
 	})
 
 	if err != nil {
@@ -63,7 +64,7 @@ func generateUsername(name string) string {
 	if len(parts) < 2 {
 		// Handle cases where there's no space between the first and last name
 		// You can implement your own logic here
-		return ""
+		return name
 	}
 	firstName := strings.ToLower(parts[0])
 	lastName := strings.ToLower(parts[1])
@@ -80,6 +81,23 @@ func generateUsername(name string) string {
 }
 
 func passwordEncryption(password string) string {
-	// salt, _ := bcrypt.salt(10)
-	return ""
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+
+	if err != nil {
+		fmt.Println("Error generating hashped password", err)
+	}
+
+	fmt.Println("Hashed password ", hashedPassword)
+
+	// Compare a password to its hashed representation
+	// err = bcrypt.CompareHashAndPassword(hashedPassword, []byte("password"))
+	// if err != nil {
+	// 	fmt.Println("Password does not match hashed representation:", err)
+	// 	return []byte("")
+	// }
+
+	// fmt.Println("Password matches hashed representation.")
+
+	return string(hashedPassword)
+
 }

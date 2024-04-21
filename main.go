@@ -19,6 +19,7 @@ type apiCfg struct {
 }
 
 func main() {
+	passwordEncryption("12345Qwerty")
 	err := godotenv.Load()
 
 	if err != nil {
