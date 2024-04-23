@@ -19,7 +19,6 @@ type apiCfg struct {
 }
 
 func main() {
-	passwordEncryption("12345Qwerty")
 	err := godotenv.Load()
 
 	if err != nil {
@@ -55,6 +54,7 @@ func main() {
 
 	v1Router.Get("/users", apiCfg.getUsers)
 	v1Router.Post("/user", apiCfg.createUser)
+	v1Router.Post("/sign", apiCfg.userSignin)
 
 	router.Mount("/v1", v1Router)
 

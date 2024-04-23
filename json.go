@@ -11,11 +11,11 @@ func errResponse(code int, w http.ResponseWriter, msg string) {
 		Error string `json:"error"`
 	}
 
-	log.Fatalf(msg)
 	jsonResponse(code, w, Error{
 		Error: msg,
 	})
 
+	log.Println(msg)
 }
 
 func jsonResponse(code int, w http.ResponseWriter, payload interface{}) {

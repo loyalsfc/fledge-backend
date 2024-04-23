@@ -96,3 +96,29 @@ func (q *Queries) GetUser(ctx context.Context) ([]User, error) {
 	}
 	return items, nil
 }
+
+const signIn = `-- name: SignIn :one
+SELECT id, name, username, email, password, bio, profession, is_verified, is_active, profile_picture, cover_picture, created_at, updated_at FROM users
+WHERE email = $1 LIMIT 1
+`
+
+func (q *Queries) SignIn(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, signIn, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Username,
+		&i.Email,
+		&i.Password,
+		&i.Bio,
+		&i.Profession,
+		&i.IsVerified,
+		&i.IsActive,
+		&i.ProfilePicture,
+		&i.CoverPicture,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
