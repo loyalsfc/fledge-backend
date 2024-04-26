@@ -56,12 +56,38 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
-const getUser = `-- name: GetUser :many
+const getUser = `-- name: GetUser :one
+SELECT id, name, username, email, password, bio, profession, is_verified, is_active, profile_picture, cover_picture, created_at, updated_at FROM users
+WHERE username = $1 LIMIT 1
+`
+
+func (q *Queries) GetUser(ctx context.Context, username string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUser, username)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Username,
+		&i.Email,
+		&i.Password,
+		&i.Bio,
+		&i.Profession,
+		&i.IsVerified,
+		&i.IsActive,
+		&i.ProfilePicture,
+		&i.CoverPicture,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUsers = `-- name: GetUsers :many
 SELECT id, name, username, email, password, bio, profession, is_verified, is_active, profile_picture, cover_picture, created_at, updated_at FROM users
 `
 
-func (q *Queries) GetUser(ctx context.Context) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, getUser)
+func (q *Queries) GetUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getUsers)
 	if err != nil {
 		return nil, err
 	}

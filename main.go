@@ -53,6 +53,7 @@ func main() {
 	})
 
 	v1Router.Get("/users", apiCfg.getUsers)
+	v1Router.Get("/user", apiCfg.middlewareAuth(apiCfg.getUser))
 	v1Router.Post("/user", apiCfg.createUser)
 	v1Router.Post("/sign", apiCfg.userSignin)
 

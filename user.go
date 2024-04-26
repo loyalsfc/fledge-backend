@@ -32,13 +32,13 @@ type SignInPayload struct {
 var secretKey = []byte("secret-key")
 
 func (apiCfg *apiCfg) getUsers(w http.ResponseWriter, r *http.Request) {
-	user, err := apiCfg.DB.GetUser(r.Context())
+	users, err := apiCfg.DB.GetUsers(r.Context())
 
 	if err != nil {
 		errResponse(403, w, fmt.Sprintf("Error getting users %v", err))
 	}
 
-	jsonResponse(200, w, user)
+	jsonResponse(200, w, handleUsersToUsers(users))
 
 }
 
@@ -66,9 +66,10 @@ func (apiCfg *apiCfg) createUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		errResponse(400, w, fmt.Sprintf("Error parsing json %v", err))
+		return
 	}
 
-	jsonResponse(200, w, user)
+	jsonResponse(200, w, handleUserToUser(user))
 }
 
 func (apiCfg apiCfg) userSignin(w http.ResponseWriter, r *http.Request) {
@@ -84,22 +85,23 @@ func (apiCfg apiCfg) userSignin(w http.ResponseWriter, r *http.Request) {
 
 	user, err := apiCfg.DB.SignIn(r.Context(), params.Email)
 
-	fmt.Println(err)
-
 	if err != nil {
 		errResponse(401, w, "invalid email or password")
+		return
 	}
 
 	isPasswordMatched := comparePassword(user.Password, params.Password)
 
 	if !isPasswordMatched {
 		errResponse(401, w, "invalid email or password")
+		return
 	}
 
 	jwtString, err := createToken(user.Username)
 
 	if err != nil {
 		errResponse(500, w, "Internal error occured")
+		return
 	}
 
 	payload := SignInPayload{
@@ -107,9 +109,7 @@ func (apiCfg apiCfg) userSignin(w http.ResponseWriter, r *http.Request) {
 		AccessToken: jwtString,
 	}
 
-	fmt.Println(payload)
-
-	jsonResponse(200, w, payload)
+	jsonResponse(200, w, handleLoginToLogin(payload))
 }
 
 func generateUsername(name string) string {
@@ -167,4 +167,16 @@ func createToken(username string) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+func (apiCfg apiCfg) getUser(w http.ResponseWriter, r *http.Request, username string) {
+	profileUsername := r.URL.Query().Get("username")
+	user, err := apiCfg.DB.GetUser(r.Context(), profileUsername)
+
+	if err != nil {
+		errResponse(404, w, fmt.Sprintf("Error occured: %v", err))
+		return
+	}
+
+	jsonResponse(200, w, handleUserToUser(user))
 }
