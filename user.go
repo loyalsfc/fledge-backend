@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -176,6 +177,68 @@ func (apiCfg apiCfg) getUser(w http.ResponseWriter, r *http.Request, username st
 	if err != nil {
 		errResponse(404, w, fmt.Sprintf("Error occured: %v", err))
 		return
+	}
+
+	jsonResponse(200, w, handleUserToUser(user))
+}
+
+type ProfileImageBody struct {
+	ProfileImage string `json:"profile_image"`
+}
+
+func (apiCfg apiCfg) changeUserProfile(w http.ResponseWriter, r *http.Request, username string) {
+	decorder := json.NewDecoder(r.Body)
+
+	params := ProfileImageBody{}
+
+	decorder.Decode(&params)
+
+	var profileImage sql.NullString
+
+	if params.ProfileImage != "" {
+		profileImage = sql.NullString{String: params.ProfileImage, Valid: true}
+	} else {
+		profileImage = sql.NullString{Valid: false}
+	}
+
+	user, err := apiCfg.DB.ChangeProfilePicture(r.Context(), database.ChangeProfilePictureParams{
+		Username:       username,
+		ProfilePicture: profileImage,
+	})
+
+	if err != nil {
+		errResponse(401, w, fmt.Sprintf("An error occured: %v", err))
+	}
+
+	jsonResponse(200, w, handleUserToUser(user))
+}
+
+type ProfileCoverBody struct {
+	CoverImage string `json:"cover_image"`
+}
+
+func (apiCfg apiCfg) changeUserCoverImage(w http.ResponseWriter, r *http.Request, username string) {
+	decorder := json.NewDecoder(r.Body)
+
+	params := ProfileCoverBody{}
+
+	decorder.Decode(&params)
+
+	var CoverImage sql.NullString
+
+	if params.CoverImage != "" {
+		CoverImage = sql.NullString{String: params.CoverImage, Valid: true}
+	} else {
+		CoverImage = sql.NullString{Valid: false}
+	}
+
+	user, err := apiCfg.DB.ChangeCoverPicture(r.Context(), database.ChangeCoverPictureParams{
+		Username:     username,
+		CoverPicture: CoverImage,
+	})
+
+	if err != nil {
+		errResponse(401, w, fmt.Sprintf("An error occured: %v", err))
 	}
 
 	jsonResponse(200, w, handleUserToUser(user))

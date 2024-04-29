@@ -7,9 +7,76 @@ package database
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
+
+const changeCoverPicture = `-- name: ChangeCoverPicture :one
+UPDATE users
+set cover_picture = $2
+WHERE username = $1
+RETURNING id, name, username, email, password, bio, profession, is_verified, is_active, profile_picture, cover_picture, created_at, updated_at
+`
+
+type ChangeCoverPictureParams struct {
+	Username     string
+	CoverPicture sql.NullString
+}
+
+func (q *Queries) ChangeCoverPicture(ctx context.Context, arg ChangeCoverPictureParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, changeCoverPicture, arg.Username, arg.CoverPicture)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Username,
+		&i.Email,
+		&i.Password,
+		&i.Bio,
+		&i.Profession,
+		&i.IsVerified,
+		&i.IsActive,
+		&i.ProfilePicture,
+		&i.CoverPicture,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const changeProfilePicture = `-- name: ChangeProfilePicture :one
+UPDATE users
+set profile_picture = $2
+WHERE username = $1
+RETURNING id, name, username, email, password, bio, profession, is_verified, is_active, profile_picture, cover_picture, created_at, updated_at
+`
+
+type ChangeProfilePictureParams struct {
+	Username       string
+	ProfilePicture sql.NullString
+}
+
+func (q *Queries) ChangeProfilePicture(ctx context.Context, arg ChangeProfilePictureParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, changeProfilePicture, arg.Username, arg.ProfilePicture)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Username,
+		&i.Email,
+		&i.Password,
+		&i.Bio,
+		&i.Profession,
+		&i.IsVerified,
+		&i.IsActive,
+		&i.ProfilePicture,
+		&i.CoverPicture,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
 
 const createUser = `-- name: CreateUser :one
 

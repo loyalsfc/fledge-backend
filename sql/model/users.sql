@@ -17,3 +17,15 @@ WHERE email = $1 LIMIT 1;
 -- name: GetUser :one
 SELECT * FROM users
 WHERE username = $1 LIMIT 1;
+
+-- name: ChangeProfilePicture :one
+UPDATE users
+set profile_picture = $2
+WHERE username = $1
+RETURNING *;
+
+-- name: ChangeCoverPicture :one
+UPDATE users
+set cover_picture = $2
+WHERE username = $1
+RETURNING *;
