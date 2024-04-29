@@ -56,7 +56,7 @@ func main() {
 	v1Router.Get("/user", apiCfg.middlewareAuth(apiCfg.getUser))
 	v1Router.Post("/user", apiCfg.createUser)
 	v1Router.Post("/sign", apiCfg.userSignin)
-	v1Router.Put("/update-profile-image", apiCfg.middlewareAuth(apiCfg.changeUserCoverImage))
+	v1Router.Put("/update-profile-image", apiCfg.middlewareAuth(apiCfg.changeUserProfile))
 	v1Router.Put("/update-cover-image", apiCfg.middlewareAuth(apiCfg.changeUserCoverImage))
 
 	router.Mount("/v1", v1Router)
