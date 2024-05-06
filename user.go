@@ -58,11 +58,13 @@ func (apiCfg *apiCfg) createUser(w http.ResponseWriter, r *http.Request) {
 	username := generateUsername(params.Name)
 
 	user, err := apiCfg.DB.CreateUser(r.Context(), database.CreateUserParams{
-		ID:       uuid.New(),
-		Name:     params.Name,
-		Email:    params.Email,
-		Username: username,
-		Password: passwordEncryption(params.Password),
+		ID:             uuid.New(),
+		Name:           params.Name,
+		Email:          params.Email,
+		Username:       username,
+		Password:       passwordEncryption(params.Password),
+		CoverPicture:   sql.NullString{Valid: true, String: "https://res.cloudinary.com/dplpf3g05/image/upload/fl_preserve_transparency/v1714867594/pexels-photo-5109665_hzr15h.jpg"},
+		ProfilePicture: sql.NullString{Valid: true, String: "/dummy.jpg"},
 	})
 
 	if err != nil {
@@ -239,6 +241,34 @@ func (apiCfg apiCfg) changeUserCoverImage(w http.ResponseWriter, r *http.Request
 
 	if err != nil {
 		errResponse(401, w, fmt.Sprintf("An error occured: %v", err))
+	}
+
+	jsonResponse(200, w, handleUserToUser(user))
+}
+
+type UpdateUserParams struct {
+	Name       string `json:"name"`
+	Bio        string `json:"bio"`
+	Profession string `json:"profession"`
+}
+
+func (apiCfg apiCfg) updateUserProfile(w http.ResponseWriter, r *http.Request, username string) {
+	decoder := json.NewDecoder(r.Body)
+
+	params := UpdateUserParams{}
+
+	decoder.Decode(&params)
+	fmt.Println(username)
+	user, err := apiCfg.DB.UpdateUserProfile(r.Context(), database.UpdateUserProfileParams{
+		Username:   username,
+		Name:       params.Name,
+		Bio:        sql.NullString{Valid: true, String: params.Bio},
+		Profession: sql.NullString{Valid: true, String: params.Profession},
+	})
+
+	if err != nil {
+		errResponse(400, w, fmt.Sprintf("An error occured %v ", err))
+		return
 	}
 
 	jsonResponse(200, w, handleUserToUser(user))

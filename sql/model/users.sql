@@ -1,9 +1,9 @@
 -- name: CreateUser :one
 
 INSERT INTO users (
-    id, name, email, username, password
+    id, name, email, username, password, cover_picture, profile_picture
 ) VALUES (
-    $1, $2, $3, $4, $5
+    $1, $2, $3, $4, $5, $6, $7
 )
 RETURNING *;
 
@@ -29,3 +29,12 @@ UPDATE users
 set cover_picture = $2
 WHERE username = $1
 RETURNING *;
+
+-- name: UpdateUserProfile :one
+UPDATE users
+    set name = $2,
+    bio = $3,
+    profession = $4
+WHERE username = $1
+RETURNING *;
+    

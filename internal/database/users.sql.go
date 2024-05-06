@@ -81,19 +81,21 @@ func (q *Queries) ChangeProfilePicture(ctx context.Context, arg ChangeProfilePic
 const createUser = `-- name: CreateUser :one
 
 INSERT INTO users (
-    id, name, email, username, password
+    id, name, email, username, password, cover_picture, profile_picture
 ) VALUES (
-    $1, $2, $3, $4, $5
+    $1, $2, $3, $4, $5, $6, $7
 )
 RETURNING id, name, username, email, password, bio, profession, is_verified, is_active, profile_picture, cover_picture, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	ID       uuid.UUID
-	Name     string
-	Email    string
-	Username string
-	Password string
+	ID             uuid.UUID
+	Name           string
+	Email          string
+	Username       string
+	Password       string
+	CoverPicture   sql.NullString
+	ProfilePicture sql.NullString
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -103,6 +105,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.Email,
 		arg.Username,
 		arg.Password,
+		arg.CoverPicture,
+		arg.ProfilePicture,
 	)
 	var i User
 	err := row.Scan(
@@ -197,6 +201,48 @@ WHERE email = $1 LIMIT 1
 
 func (q *Queries) SignIn(ctx context.Context, email string) (User, error) {
 	row := q.db.QueryRowContext(ctx, signIn, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Username,
+		&i.Email,
+		&i.Password,
+		&i.Bio,
+		&i.Profession,
+		&i.IsVerified,
+		&i.IsActive,
+		&i.ProfilePicture,
+		&i.CoverPicture,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateUserProfile = `-- name: UpdateUserProfile :one
+UPDATE users
+    set name = $2,
+    bio = $3,
+    profession = $4
+WHERE username = $1
+RETURNING id, name, username, email, password, bio, profession, is_verified, is_active, profile_picture, cover_picture, created_at, updated_at
+`
+
+type UpdateUserProfileParams struct {
+	Username   string
+	Name       string
+	Bio        sql.NullString
+	Profession sql.NullString
+}
+
+func (q *Queries) UpdateUserProfile(ctx context.Context, arg UpdateUserProfileParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateUserProfile,
+		arg.Username,
+		arg.Name,
+		arg.Bio,
+		arg.Profession,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
