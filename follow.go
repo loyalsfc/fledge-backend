@@ -88,3 +88,23 @@ func (apiCfg apiCfg) getFollowing(w http.ResponseWriter, r *http.Request, userna
 
 	jsonResponse(200, w, handleFollowsToFollows(list))
 }
+
+func (apiCfg apiCfg) unfollow(w http.ResponseWriter, r *http.Request, username string) {
+	decorder := json.NewDecoder(r.Body)
+
+	params := FollowParams{}
+
+	decorder.Decode(&params)
+
+	err := apiCfg.DB.UnfollowOne(r.Context(), database.UnfollowOneParams{
+		FollowerID:  params.Follower,
+		FollowingID: params.Following,
+	})
+
+	if err != nil {
+		errResponse(400, w, fmt.Sprintf("Error %v", err))
+		return
+	}
+
+	jsonResponse(200, w, params)
+}

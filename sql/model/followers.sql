@@ -19,3 +19,6 @@ FROM users u
 INNER JOIN followers f ON f.follower_id = u.id
 WHERE f.following_id = $1;
 
+-- name: UnfollowOne :exec
+DELETE FROM followers
+WHERE follower_id = $1 and following_id = $2;

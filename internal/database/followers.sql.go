@@ -161,3 +161,18 @@ func (q *Queries) NewFollower(ctx context.Context, arg NewFollowerParams) (Follo
 	err := row.Scan(&i.FollowerID, &i.FollowingID)
 	return i, err
 }
+
+const unfollowOne = `-- name: UnfollowOne :exec
+DELETE FROM followers
+WHERE follower_id = $1 and following_id = $2
+`
+
+type UnfollowOneParams struct {
+	FollowerID  uuid.UUID
+	FollowingID uuid.UUID
+}
+
+func (q *Queries) UnfollowOne(ctx context.Context, arg UnfollowOneParams) error {
+	_, err := q.db.ExecContext(ctx, unfollowOne, arg.FollowerID, arg.FollowingID)
+	return err
+}
