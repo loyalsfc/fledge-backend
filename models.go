@@ -58,3 +58,57 @@ func handleLoginToLogin(signInPayload SignInPayload) (signInResponse SignInJson)
 		AccessToken: signInPayload.AccessToken,
 	}
 }
+
+func handleFollowToFollow(followList database.GetFollowingRow) (user User) {
+	return User{
+		ID:             followList.ID,
+		Name:           followList.Name,
+		Username:       followList.Username,
+		Email:          followList.Email,
+		Bio:            followList.Bio.String,
+		Profession:     followList.Profession.String,
+		IsVerified:     followList.IsVerified.Bool,
+		IsActive:       followList.IsActive.Bool,
+		ProfilePicture: followList.ProfilePicture.String,
+		CoverPicture:   followList.CoverPicture.String,
+		CreatedAt:      followList.CreatedAt.Time.String(),
+		UpdatedAt:      followList.UpdatedAt.Time.String(),
+	}
+}
+
+func handleFollowsToFollows(followList []database.GetFollowingRow) (users []User) {
+	usersList := []User{}
+
+	for _, userList := range followList {
+		usersList = append(usersList, handleFollowToFollow(userList))
+	}
+
+	return usersList
+}
+
+func handleFollowerToFollower(followList database.GetFollowersRow) (user User) {
+	return User{
+		ID:             followList.ID,
+		Name:           followList.Name,
+		Username:       followList.Username,
+		Email:          followList.Email,
+		Bio:            followList.Bio.String,
+		Profession:     followList.Profession.String,
+		IsVerified:     followList.IsVerified.Bool,
+		IsActive:       followList.IsActive.Bool,
+		ProfilePicture: followList.ProfilePicture.String,
+		CoverPicture:   followList.CoverPicture.String,
+		CreatedAt:      followList.CreatedAt.Time.String(),
+		UpdatedAt:      followList.UpdatedAt.Time.String(),
+	}
+}
+
+func handleFollowersToFollowers(followList []database.GetFollowersRow) (users []User) {
+	usersList := []User{}
+
+	for _, userList := range followList {
+		usersList = append(usersList, handleFollowerToFollower(userList))
+	}
+
+	return usersList
+}
