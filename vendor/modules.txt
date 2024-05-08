@@ -16,6 +16,9 @@ github.com/joho/godotenv
 github.com/lib/pq
 github.com/lib/pq/oid
 github.com/lib/pq/scram
+# github.com/sqlc-dev/pqtype v0.3.0
+## explicit; go 1.13
+github.com/sqlc-dev/pqtype
 # golang.org/x/crypto v0.22.0
 ## explicit; go 1.18
 golang.org/x/crypto/bcrypt

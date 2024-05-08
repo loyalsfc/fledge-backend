@@ -6,4 +6,4 @@ CREATE TABLE followers (
 );
 
 -- +goose Down 
-DROP TABLE followers
+DROP TABLE followers;

@@ -6,5 +6,5 @@ CREATE TABLE bookmarks (
     PRIMARY KEY (user_id, post_id)
 );
 
--- +goose down
-DROP TABLE bookmarks
+-- +goose Down
+DROP TABLE bookmarks;

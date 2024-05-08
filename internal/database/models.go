@@ -6,13 +6,30 @@ package database
 
 import (
 	"database/sql"
+	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 )
 
+type Bookmark struct {
+	UserID uuid.UUID
+	PostID uuid.UUID
+}
+
 type Follower struct {
 	FollowerID  uuid.UUID
 	FollowingID uuid.UUID
+}
+
+type Post struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	Content   string
+	Media     json.RawMessage
+	Username  string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type User struct {

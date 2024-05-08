@@ -56,13 +56,17 @@ func main() {
 	v1Router.Get("/user", apiCfg.middlewareAuth(apiCfg.getUser))
 	v1Router.Post("/user", apiCfg.createUser)
 	v1Router.Post("/sign", apiCfg.userSignin)
+
 	v1Router.Put("/update-profile-image", apiCfg.middlewareAuth(apiCfg.changeUserProfile))
 	v1Router.Put("/update-cover-image", apiCfg.middlewareAuth(apiCfg.changeUserCoverImage))
 	v1Router.Put("/update-user-profile", apiCfg.middlewareAuth(apiCfg.updateUserProfile))
+
 	v1Router.Post("/follow", apiCfg.middlewareAuth(apiCfg.follow))
 	v1Router.Post("/unfollow", apiCfg.middlewareAuth(apiCfg.unfollow))
 	v1Router.Get("/get-followers", apiCfg.middlewareAuth(apiCfg.getFollower))
 	v1Router.Get("/get-following", apiCfg.middlewareAuth(apiCfg.getFollowing))
+
+	v1Router.Post("/new-post", apiCfg.middlewareAuth(apiCfg.makePost))
 
 	router.Mount("/v1", v1Router)
 

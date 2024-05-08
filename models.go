@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+
 	"github.com/google/uuid"
 	"github.com/loyalsfc/fledge-backend/internal/database"
 )
@@ -111,4 +113,26 @@ func handleFollowersToFollowers(followList []database.GetFollowersRow) (users []
 	}
 
 	return usersList
+}
+
+type Post struct {
+	ID        uuid.UUID       `json:"id"`
+	UserID    uuid.UUID       `json:"user_id"`
+	Content   string          `json:"content"`
+	Media     json.RawMessage `json:"media"`
+	Username  string          `json:"username"`
+	CreatedAt string          `json:"created_at"`
+	UpdatedAt string          `json:"updated_at"`
+}
+
+func handlePostToPost(dbPost database.Post) (post Post) {
+	return Post{
+		ID:        dbPost.ID,
+		UserID:    dbPost.UserID,
+		Content:   dbPost.Content,
+		Media:     dbPost.Media,
+		Username:  dbPost.Username,
+		CreatedAt: dbPost.CreatedAt.GoString(),
+		UpdatedAt: dbPost.UpdatedAt.GoString(),
+	}
 }

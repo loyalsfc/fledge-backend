@@ -11,3 +11,5 @@ require (
 )
 
 require github.com/golang-jwt/jwt/v5 v5.2.1
+
+require github.com/sqlc-dev/pqtype v0.3.0
