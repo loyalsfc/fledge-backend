@@ -7,11 +7,105 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+const getPost = `-- name: GetPost :one
+SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, u.name, u.profile_picture, u.is_verified
+FROM posts p
+INNER JOIN users u ON p.user_id = u.id
+WHERE p.id = $1 LIMIT 1
+`
+
+type GetPostRow struct {
+	ID             uuid.UUID
+	UserID         uuid.UUID
+	Content        string
+	Media          json.RawMessage
+	Username       string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	Name           string
+	ProfilePicture sql.NullString
+	IsVerified     sql.NullBool
+}
+
+func (q *Queries) GetPost(ctx context.Context, id uuid.UUID) (GetPostRow, error) {
+	row := q.db.QueryRowContext(ctx, getPost, id)
+	var i GetPostRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Content,
+		&i.Media,
+		&i.Username,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Name,
+		&i.ProfilePicture,
+		&i.IsVerified,
+	)
+	return i, err
+}
+
+const getUserPosts = `-- name: GetUserPosts :many
+SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, u.name, u.profile_picture, u.is_verified
+FROM posts p
+INNER JOIN users u ON p.user_id = u.id
+WHERE u.username = $1
+ORDER BY p.created_at DESC
+`
+
+type GetUserPostsRow struct {
+	ID             uuid.UUID
+	UserID         uuid.UUID
+	Content        string
+	Media          json.RawMessage
+	Username       string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	Name           string
+	ProfilePicture sql.NullString
+	IsVerified     sql.NullBool
+}
+
+func (q *Queries) GetUserPosts(ctx context.Context, username string) ([]GetUserPostsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUserPosts, username)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUserPostsRow
+	for rows.Next() {
+		var i GetUserPostsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Content,
+			&i.Media,
+			&i.Username,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Name,
+			&i.ProfilePicture,
+			&i.IsVerified,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
 
 const newPost = `-- name: NewPost :one
 
@@ -20,7 +114,7 @@ INSERT INTO posts (
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7
 )
-RETURNING id, user_id, content, media, username, created_at, updated_at
+RETURNING id
 `
 
 type NewPostParams struct {
@@ -33,7 +127,7 @@ type NewPostParams struct {
 	UpdatedAt time.Time
 }
 
-func (q *Queries) NewPost(ctx context.Context, arg NewPostParams) (Post, error) {
+func (q *Queries) NewPost(ctx context.Context, arg NewPostParams) (uuid.UUID, error) {
 	row := q.db.QueryRowContext(ctx, newPost,
 		arg.ID,
 		arg.UserID,
@@ -43,15 +137,7 @@ func (q *Queries) NewPost(ctx context.Context, arg NewPostParams) (Post, error) 
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
-	var i Post
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.Content,
-		&i.Media,
-		&i.Username,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
 }

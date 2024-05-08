@@ -116,23 +116,52 @@ func handleFollowersToFollowers(followList []database.GetFollowersRow) (users []
 }
 
 type Post struct {
-	ID        uuid.UUID       `json:"id"`
-	UserID    uuid.UUID       `json:"user_id"`
-	Content   string          `json:"content"`
-	Media     json.RawMessage `json:"media"`
-	Username  string          `json:"username"`
-	CreatedAt string          `json:"created_at"`
-	UpdatedAt string          `json:"updated_at"`
+	ID             uuid.UUID       `json:"id"`
+	UserID         uuid.UUID       `json:"user_id"`
+	Content        string          `json:"content"`
+	Media          json.RawMessage `json:"media"`
+	Username       string          `json:"username"`
+	CreatedAt      string          `json:"created_at"`
+	UpdatedAt      string          `json:"updated_at"`
+	Name           string          `json:"name"`
+	ProfilePicture string          `json:"profile_picture"`
+	IsVerified     bool            `json:"is_verified"`
 }
 
-func handlePostToPost(dbPost database.Post) (post Post) {
+func handlePostToPost(dbPost database.GetPostRow) (post Post) {
+	JavascriptISOString := "2006-01-02T15:04:05.999Z07:00"
 	return Post{
-		ID:        dbPost.ID,
-		UserID:    dbPost.UserID,
-		Content:   dbPost.Content,
-		Media:     dbPost.Media,
-		Username:  dbPost.Username,
-		CreatedAt: dbPost.CreatedAt.GoString(),
-		UpdatedAt: dbPost.UpdatedAt.GoString(),
+		ID:             dbPost.ID,
+		UserID:         dbPost.UserID,
+		Content:        dbPost.Content,
+		Media:          dbPost.Media,
+		Username:       dbPost.Username,
+		CreatedAt:      dbPost.CreatedAt.Format(JavascriptISOString),
+		UpdatedAt:      dbPost.UpdatedAt.Format(JavascriptISOString),
+		Name:           dbPost.Name,
+		ProfilePicture: dbPost.ProfilePicture.String,
+		IsVerified:     dbPost.IsVerified.Bool,
 	}
+}
+
+func handlePostsToPosts(dbPosts []database.GetUserPostsRow) (posts []Post) {
+	JavascriptISOString := "2006-01-02T15:04:05.999Z07:00"
+	initPosts := []Post{}
+
+	for _, post := range dbPosts {
+		initPosts = append(initPosts, Post{
+			ID:             post.ID,
+			UserID:         post.UserID,
+			Content:        post.Content,
+			Media:          post.Media,
+			Username:       post.Username,
+			CreatedAt:      post.CreatedAt.Format(JavascriptISOString),
+			UpdatedAt:      post.UpdatedAt.Format(JavascriptISOString),
+			Name:           post.Name,
+			ProfilePicture: post.ProfilePicture.String,
+			IsVerified:     post.IsVerified.Bool,
+		})
+	}
+
+	return initPosts
 }

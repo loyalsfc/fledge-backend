@@ -67,6 +67,8 @@ func main() {
 	v1Router.Get("/get-following", apiCfg.middlewareAuth(apiCfg.getFollowing))
 
 	v1Router.Post("/new-post", apiCfg.middlewareAuth(apiCfg.makePost))
+	v1Router.Get("/user-posts", apiCfg.middlewareAuth(apiCfg.getUserPosts))
+	v1Router.Get("/post", apiCfg.middlewareAuth(apiCfg.getPost))
 
 	router.Mount("/v1", v1Router)
 
