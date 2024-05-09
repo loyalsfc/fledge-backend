@@ -2,8 +2,8 @@
 
 CREATE TABLE likes (
     post_id UUID REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
-    PRIMARY KEY (post_id, user_id)
+    username TEXT REFERENCES users(username) ON DELETE CASCADE NOT NULL,
+    PRIMARY KEY (post_id, username)
 );
 
 -- +goose Down

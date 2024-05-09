@@ -14,33 +14,33 @@ import (
 const likePost = `-- name: LikePost :exec
 
 INSERT INTO likes (
-    user_id, post_id
+    username, post_id
 ) VALUES (
     $1, $2
 )
 `
 
 type LikePostParams struct {
-	UserID uuid.UUID
-	PostID uuid.UUID
+	Username string
+	PostID   uuid.UUID
 }
 
 func (q *Queries) LikePost(ctx context.Context, arg LikePostParams) error {
-	_, err := q.db.ExecContext(ctx, likePost, arg.UserID, arg.PostID)
+	_, err := q.db.ExecContext(ctx, likePost, arg.Username, arg.PostID)
 	return err
 }
 
 const unlikePost = `-- name: UnlikePost :exec
 DELETE FROM likes 
-WHERE user_id = $1 AND post_id = $2
+WHERE username = $1 AND post_id = $2
 `
 
 type UnlikePostParams struct {
-	UserID uuid.UUID
-	PostID uuid.UUID
+	Username string
+	PostID   uuid.UUID
 }
 
 func (q *Queries) UnlikePost(ctx context.Context, arg UnlikePostParams) error {
-	_, err := q.db.ExecContext(ctx, unlikePost, arg.UserID, arg.PostID)
+	_, err := q.db.ExecContext(ctx, unlikePost, arg.Username, arg.PostID)
 	return err
 }

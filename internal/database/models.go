@@ -23,8 +23,8 @@ type Follower struct {
 }
 
 type Like struct {
-	PostID uuid.UUID
-	UserID uuid.UUID
+	PostID   uuid.UUID
+	Username string
 }
 
 type Post struct {
