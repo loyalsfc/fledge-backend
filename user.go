@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/loyalsfc/fledge-backend/internal/database"
@@ -173,7 +174,7 @@ func createToken(username string) (string, error) {
 }
 
 func (apiCfg apiCfg) getUser(w http.ResponseWriter, r *http.Request, username string) {
-	profileUsername := r.URL.Query().Get("username")
+	profileUsername := chi.URLParam(r, "username")
 	user, err := apiCfg.DB.GetUser(r.Context(), profileUsername)
 
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/loyalsfc/fledge-backend/internal/database"
 )
@@ -36,7 +37,7 @@ func (apiCfg apiCfg) follow(w http.ResponseWriter, r *http.Request, username str
 }
 
 func getIdFromParams(r *http.Request) (uuid.UUID, error) {
-	id := r.URL.Query().Get("id")
+	id := chi.URLParam(r, "userID")
 
 	if id == "" {
 		return uuid.New(), errors.New("no id found")

@@ -22,14 +22,23 @@ type Follower struct {
 	FollowingID uuid.UUID
 }
 
+type Like struct {
+	PostID uuid.UUID
+	UserID uuid.UUID
+}
+
 type Post struct {
-	ID        uuid.UUID
-	UserID    uuid.UUID
-	Content   string
-	Media     json.RawMessage
-	Username  string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID             uuid.UUID
+	UserID         uuid.UUID
+	Content        string
+	Media          json.RawMessage
+	Username       string
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	LikesCount     int32
+	CommentCount   int32
+	BookmarksCount int32
+	ShareCount     int32
 }
 
 type User struct {

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/loyalsfc/fledge-backend/internal/database"
 )
@@ -48,7 +49,7 @@ func (apiCfg apiCfg) makePost(w http.ResponseWriter, r *http.Request, username s
 }
 
 func (apiCfg apiCfg) getUserPosts(w http.ResponseWriter, r *http.Request, username string) {
-	profileUsername := r.URL.Query().Get("username")
+	profileUsername := chi.URLParam(r, "username")
 
 	if profileUsername == "" {
 		errResponse(200, w, "Invalid username")
@@ -67,7 +68,7 @@ func (apiCfg apiCfg) getUserPosts(w http.ResponseWriter, r *http.Request, userna
 }
 
 func (apiCfg apiCfg) getPost(w http.ResponseWriter, r *http.Request, username string) {
-	postId := r.URL.Query().Get("id")
+	postId := chi.URLParam(r, "postID")
 
 	if postId == "" {
 		errResponse(404, w, "post id not found")

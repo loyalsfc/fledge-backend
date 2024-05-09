@@ -15,7 +15,7 @@ import (
 )
 
 const getPost = `-- name: GetPost :one
-SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, u.name, u.profile_picture, u.is_verified
+SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, u.name, u.profile_picture, u.is_verified
 FROM posts p
 INNER JOIN users u ON p.user_id = u.id
 WHERE p.id = $1 LIMIT 1
@@ -29,6 +29,10 @@ type GetPostRow struct {
 	Username       string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+	LikesCount     int32
+	CommentCount   int32
+	BookmarksCount int32
+	ShareCount     int32
 	Name           string
 	ProfilePicture sql.NullString
 	IsVerified     sql.NullBool
@@ -45,6 +49,10 @@ func (q *Queries) GetPost(ctx context.Context, id uuid.UUID) (GetPostRow, error)
 		&i.Username,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.LikesCount,
+		&i.CommentCount,
+		&i.BookmarksCount,
+		&i.ShareCount,
 		&i.Name,
 		&i.ProfilePicture,
 		&i.IsVerified,
@@ -53,7 +61,7 @@ func (q *Queries) GetPost(ctx context.Context, id uuid.UUID) (GetPostRow, error)
 }
 
 const getUserPosts = `-- name: GetUserPosts :many
-SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, u.name, u.profile_picture, u.is_verified
+SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, u.name, u.profile_picture, u.is_verified
 FROM posts p
 INNER JOIN users u ON p.user_id = u.id
 WHERE u.username = $1
@@ -68,6 +76,10 @@ type GetUserPostsRow struct {
 	Username       string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+	LikesCount     int32
+	CommentCount   int32
+	BookmarksCount int32
+	ShareCount     int32
 	Name           string
 	ProfilePicture sql.NullString
 	IsVerified     sql.NullBool
@@ -90,6 +102,10 @@ func (q *Queries) GetUserPosts(ctx context.Context, username string) ([]GetUserP
 			&i.Username,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.LikesCount,
+			&i.CommentCount,
+			&i.BookmarksCount,
+			&i.ShareCount,
 			&i.Name,
 			&i.ProfilePicture,
 			&i.IsVerified,

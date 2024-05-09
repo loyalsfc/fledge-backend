@@ -123,6 +123,10 @@ type Post struct {
 	Username       string          `json:"username"`
 	CreatedAt      string          `json:"created_at"`
 	UpdatedAt      string          `json:"updated_at"`
+	LikesCount     int             `json:"likes_count"`
+	CommentCount   int             `json:"comments_count"`
+	BookmarksCount int             `json:"bookmarks_count"`
+	ShareCount     int             `json:"shared_count"`
 	Name           string          `json:"name"`
 	ProfilePicture string          `json:"profile_picture"`
 	IsVerified     bool            `json:"is_verified"`
@@ -138,6 +142,10 @@ func handlePostToPost(dbPost database.GetPostRow) (post Post) {
 		Username:       dbPost.Username,
 		CreatedAt:      dbPost.CreatedAt.Format(JavascriptISOString),
 		UpdatedAt:      dbPost.UpdatedAt.Format(JavascriptISOString),
+		LikesCount:     int(dbPost.LikesCount),
+		CommentCount:   int(dbPost.CommentCount),
+		BookmarksCount: int(dbPost.BookmarksCount),
+		ShareCount:     int(dbPost.ShareCount),
 		Name:           dbPost.Name,
 		ProfilePicture: dbPost.ProfilePicture.String,
 		IsVerified:     dbPost.IsVerified.Bool,
@@ -157,6 +165,10 @@ func handlePostsToPosts(dbPosts []database.GetUserPostsRow) (posts []Post) {
 			Username:       post.Username,
 			CreatedAt:      post.CreatedAt.Format(JavascriptISOString),
 			UpdatedAt:      post.UpdatedAt.Format(JavascriptISOString),
+			LikesCount:     int(post.LikesCount),
+			CommentCount:   int(post.CommentCount),
+			BookmarksCount: int(post.BookmarksCount),
+			ShareCount:     int(post.ShareCount),
 			Name:           post.Name,
 			ProfilePicture: post.ProfilePicture.String,
 			IsVerified:     post.IsVerified.Bool,

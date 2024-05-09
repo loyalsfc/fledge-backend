@@ -53,7 +53,7 @@ func main() {
 	})
 
 	v1Router.Get("/users", apiCfg.getUsers)
-	v1Router.Get("/user", apiCfg.middlewareAuth(apiCfg.getUser))
+	v1Router.Get("/user/{username}", apiCfg.middlewareAuth(apiCfg.getUser))
 	v1Router.Post("/user", apiCfg.createUser)
 	v1Router.Post("/sign", apiCfg.userSignin)
 
@@ -63,12 +63,12 @@ func main() {
 
 	v1Router.Post("/follow", apiCfg.middlewareAuth(apiCfg.follow))
 	v1Router.Post("/unfollow", apiCfg.middlewareAuth(apiCfg.unfollow))
-	v1Router.Get("/get-followers", apiCfg.middlewareAuth(apiCfg.getFollower))
-	v1Router.Get("/get-following", apiCfg.middlewareAuth(apiCfg.getFollowing))
+	v1Router.Get("/get-followers/{userID}", apiCfg.middlewareAuth(apiCfg.getFollower))
+	v1Router.Get("/get-following/{userID}", apiCfg.middlewareAuth(apiCfg.getFollowing))
 
 	v1Router.Post("/new-post", apiCfg.middlewareAuth(apiCfg.makePost))
-	v1Router.Get("/user-posts", apiCfg.middlewareAuth(apiCfg.getUserPosts))
-	v1Router.Get("/post", apiCfg.middlewareAuth(apiCfg.getPost))
+	v1Router.Get("/user-posts/{username}", apiCfg.middlewareAuth(apiCfg.getUserPosts))
+	v1Router.Get("/post/{postID}", apiCfg.middlewareAuth(apiCfg.getPost))
 
 	router.Mount("/v1", v1Router)
 
