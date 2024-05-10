@@ -70,6 +70,9 @@ func main() {
 	v1Router.Get("/user-posts/{username}", apiCfg.middlewareAuth(apiCfg.getUserPosts))
 	v1Router.Get("/post/{postID}", apiCfg.middlewareAuth(apiCfg.getPost))
 
+	v1Router.Post("/like-post", apiCfg.middlewareAuth(apiCfg.likePost))
+	v1Router.Post("/unlike-post", apiCfg.middlewareAuth(apiCfg.unlikePost))
+
 	router.Mount("/v1", v1Router)
 
 	http.ListenAndServe(":3333", router)

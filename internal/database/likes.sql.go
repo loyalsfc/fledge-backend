@@ -18,6 +18,7 @@ INSERT INTO likes (
 ) VALUES (
     $1, $2
 )
+RETURNING post_id, username
 `
 
 type LikePostParams struct {
@@ -42,5 +43,27 @@ type UnlikePostParams struct {
 
 func (q *Queries) UnlikePost(ctx context.Context, arg UnlikePostParams) error {
 	_, err := q.db.ExecContext(ctx, unlikePost, arg.Username, arg.PostID)
+	return err
+}
+
+const updateLikeDecrease = `-- name: UpdateLikeDecrease :exec
+UPDATE posts
+SET likes_count = likes_count - 1
+WHERE id = $1
+`
+
+func (q *Queries) UpdateLikeDecrease(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, updateLikeDecrease, id)
+	return err
+}
+
+const updateLikeIncrease = `-- name: UpdateLikeIncrease :exec
+UPDATE posts
+SET likes_count = likes_count + 1
+WHERE id = $1
+`
+
+func (q *Queries) UpdateLikeIncrease(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, updateLikeIncrease, id)
 	return err
 }
