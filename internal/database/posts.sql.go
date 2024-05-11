@@ -14,6 +14,75 @@ import (
 	"github.com/google/uuid"
 )
 
+const getFeedPosts = `-- name: GetFeedPosts :many
+SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, u.name, u.profile_picture, u.is_verified,
+    array_agg(CAST(l.username AS VARCHAR)) AS liked_users_username
+FROM posts p
+INNER JOIN users u ON p.user_id = u.id
+LEFT JOIN likes l ON p.id = l.post_id
+LEFT JOIN followers f ON p.user_id = f.following_id
+WHERE f.follower_id = $1 OR p.user_id = $1
+GROUP BY p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, u.name, u.profile_picture, u.is_verified
+ORDER BY p.created_at DESC
+`
+
+type GetFeedPostsRow struct {
+	ID                 uuid.UUID
+	UserID             uuid.UUID
+	Content            string
+	Media              json.RawMessage
+	Username           string
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	LikesCount         int32
+	CommentCount       int32
+	BookmarksCount     int32
+	ShareCount         int32
+	Name               string
+	ProfilePicture     sql.NullString
+	IsVerified         sql.NullBool
+	LikedUsersUsername interface{}
+}
+
+func (q *Queries) GetFeedPosts(ctx context.Context, followerID uuid.UUID) ([]GetFeedPostsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getFeedPosts, followerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetFeedPostsRow
+	for rows.Next() {
+		var i GetFeedPostsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Content,
+			&i.Media,
+			&i.Username,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.LikesCount,
+			&i.CommentCount,
+			&i.BookmarksCount,
+			&i.ShareCount,
+			&i.Name,
+			&i.ProfilePicture,
+			&i.IsVerified,
+			&i.LikedUsersUsername,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPost = `-- name: GetPost :one
 SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, u.name, u.profile_picture, u.is_verified
 FROM posts p

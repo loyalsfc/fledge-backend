@@ -69,6 +69,7 @@ func main() {
 	v1Router.Post("/new-post", apiCfg.middlewareAuth(apiCfg.makePost))
 	v1Router.Get("/user-posts/{username}", apiCfg.middlewareAuth(apiCfg.getUserPosts))
 	v1Router.Get("/post/{postID}", apiCfg.middlewareAuth(apiCfg.getPost))
+	v1Router.Get("/feeds", apiCfg.middlewareAuth(apiCfg.getUserFeeds))
 
 	v1Router.Post("/like-post", apiCfg.middlewareAuth(apiCfg.likePost))
 	v1Router.Post("/unlike-post", apiCfg.middlewareAuth(apiCfg.unlikePost))

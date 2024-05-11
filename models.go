@@ -195,3 +195,45 @@ func handlePostsToPosts(dbPosts []database.GetUserPostsRow) (posts []Post) {
 
 	return initPosts
 }
+
+func handleFeedsToFeeds(dbPosts []database.GetFeedPostsRow) (posts []Post) {
+	JavascriptISOString := "2006-01-02T15:04:05.999Z07:00"
+	initPosts := []Post{}
+
+	for _, post := range dbPosts {
+
+		usernames := post.LikedUsersUsername
+
+		byteArray, ok := usernames.([]uint8)
+
+		var result string
+
+		if !ok {
+			fmt.Println("failed to convert error")
+		} else {
+			for _, item := range byteArray {
+				result += string(item)
+			}
+		}
+
+		initPosts = append(initPosts, Post{
+			ID:                 post.ID,
+			UserID:             post.UserID,
+			Content:            post.Content,
+			Media:              post.Media,
+			Username:           post.Username,
+			CreatedAt:          post.CreatedAt.Format(JavascriptISOString),
+			UpdatedAt:          post.UpdatedAt.Format(JavascriptISOString),
+			LikesCount:         int(post.LikesCount),
+			CommentCount:       int(post.CommentCount),
+			BookmarksCount:     int(post.BookmarksCount),
+			ShareCount:         int(post.ShareCount),
+			Name:               post.Name,
+			ProfilePicture:     post.ProfilePicture.String,
+			IsVerified:         post.IsVerified.Bool,
+			LikedUsersUsername: result,
+		})
+	}
+
+	return initPosts
+}

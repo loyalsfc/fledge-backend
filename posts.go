@@ -91,3 +91,28 @@ func (apiCfg apiCfg) getPost(w http.ResponseWriter, r *http.Request, username st
 
 	jsonResponse(200, w, handlePostToPost(post))
 }
+
+func (apiCfg apiCfg) getUserFeeds(w http.ResponseWriter, r *http.Request, username string) {
+	var idString string = r.URL.Query().Get("id")
+
+	if idString == "" {
+		errResponse(401, w, "no id found")
+		return
+	}
+
+	userID, err := uuid.Parse(idString)
+
+	if err != nil {
+		errResponse(401, w, fmt.Sprintf("error: %v", err))
+		return
+	}
+
+	feeds, err := apiCfg.DB.GetFeedPosts(r.Context(), userID)
+
+	if err != nil {
+		errResponse(401, w, fmt.Sprintf("error: %v", err))
+		return
+	}
+
+	jsonResponse(200, w, handleFeedsToFeeds(feeds))
+}
