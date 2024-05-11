@@ -7,16 +7,22 @@ INSERT INTO likes (
 )
 RETURNING *;
 
--- name: UpdateLikeIncrease :exec
+-- name: UpdateLikeIncrease :one
 UPDATE posts
 SET likes_count = likes_count + 1
-WHERE id = $1;
+WHERE id = $1
+RETURNING likes_count;
 
 -- name: UnlikePost :exec
 DELETE FROM likes 
 WHERE username = $1 AND post_id = $2;
 
--- name: UpdateLikeDecrease :exec
+-- name: UpdateLikeDecrease :one
 UPDATE posts
 SET likes_count = likes_count - 1
-WHERE id = $1;
+WHERE id = $1
+RETURNING likes_count;
+
+-- name: GetPostLikes :many
+SELECT * FROM likes
+WHERE post_id = $1;

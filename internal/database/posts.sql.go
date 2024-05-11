@@ -61,28 +61,32 @@ func (q *Queries) GetPost(ctx context.Context, id uuid.UUID) (GetPostRow, error)
 }
 
 const getUserPosts = `-- name: GetUserPosts :many
-SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, u.name, u.profile_picture, u.is_verified
+SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, u.name, u.profile_picture, u.is_verified,
+    array_agg(CAST(l.username AS VARCHAR)) AS liked_users_username
 FROM posts p
 INNER JOIN users u ON p.user_id = u.id
-WHERE u.username = $1
+LEFT JOIN likes l ON p.id = l.post_id
+WHERE p.username = $1
+GROUP BY p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, u.name, u.profile_picture, u.is_verified
 ORDER BY p.created_at DESC
 `
 
 type GetUserPostsRow struct {
-	ID             uuid.UUID
-	UserID         uuid.UUID
-	Content        string
-	Media          json.RawMessage
-	Username       string
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	LikesCount     int32
-	CommentCount   int32
-	BookmarksCount int32
-	ShareCount     int32
-	Name           string
-	ProfilePicture sql.NullString
-	IsVerified     sql.NullBool
+	ID                 uuid.UUID
+	UserID             uuid.UUID
+	Content            string
+	Media              json.RawMessage
+	Username           string
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	LikesCount         int32
+	CommentCount       int32
+	BookmarksCount     int32
+	ShareCount         int32
+	Name               string
+	ProfilePicture     sql.NullString
+	IsVerified         sql.NullBool
+	LikedUsersUsername interface{}
 }
 
 func (q *Queries) GetUserPosts(ctx context.Context, username string) ([]GetUserPostsRow, error) {
@@ -109,6 +113,7 @@ func (q *Queries) GetUserPosts(ctx context.Context, username string) ([]GetUserP
 			&i.Name,
 			&i.ProfilePicture,
 			&i.IsVerified,
+			&i.LikedUsersUsername,
 		); err != nil {
 			return nil, err
 		}

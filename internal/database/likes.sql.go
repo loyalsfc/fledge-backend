@@ -11,6 +11,34 @@ import (
 	"github.com/google/uuid"
 )
 
+const getPostLikes = `-- name: GetPostLikes :many
+SELECT post_id, username FROM likes
+WHERE post_id = $1
+`
+
+func (q *Queries) GetPostLikes(ctx context.Context, postID uuid.UUID) ([]Like, error) {
+	rows, err := q.db.QueryContext(ctx, getPostLikes, postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Like
+	for rows.Next() {
+		var i Like
+		if err := rows.Scan(&i.PostID, &i.Username); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const likePost = `-- name: LikePost :exec
 
 INSERT INTO likes (
@@ -46,24 +74,30 @@ func (q *Queries) UnlikePost(ctx context.Context, arg UnlikePostParams) error {
 	return err
 }
 
-const updateLikeDecrease = `-- name: UpdateLikeDecrease :exec
+const updateLikeDecrease = `-- name: UpdateLikeDecrease :one
 UPDATE posts
 SET likes_count = likes_count - 1
 WHERE id = $1
+RETURNING likes_count
 `
 
-func (q *Queries) UpdateLikeDecrease(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, updateLikeDecrease, id)
-	return err
+func (q *Queries) UpdateLikeDecrease(ctx context.Context, id uuid.UUID) (int32, error) {
+	row := q.db.QueryRowContext(ctx, updateLikeDecrease, id)
+	var likes_count int32
+	err := row.Scan(&likes_count)
+	return likes_count, err
 }
 
-const updateLikeIncrease = `-- name: UpdateLikeIncrease :exec
+const updateLikeIncrease = `-- name: UpdateLikeIncrease :one
 UPDATE posts
 SET likes_count = likes_count + 1
 WHERE id = $1
+RETURNING likes_count
 `
 
-func (q *Queries) UpdateLikeIncrease(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, updateLikeIncrease, id)
-	return err
+func (q *Queries) UpdateLikeIncrease(ctx context.Context, id uuid.UUID) (int32, error) {
+	row := q.db.QueryRowContext(ctx, updateLikeIncrease, id)
+	var likes_count int32
+	err := row.Scan(&likes_count)
+	return likes_count, err
 }

@@ -86,6 +86,7 @@ func (apiCfg apiCfg) getPost(w http.ResponseWriter, r *http.Request, username st
 
 	if err != nil {
 		errResponse(400, w, fmt.Sprintf("error %v ", err))
+		return
 	}
 
 	jsonResponse(200, w, handlePostToPost(post))

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/loyalsfc/fledge-backend/internal/database"
@@ -116,20 +117,21 @@ func handleFollowersToFollowers(followList []database.GetFollowersRow) (users []
 }
 
 type Post struct {
-	ID             uuid.UUID       `json:"id"`
-	UserID         uuid.UUID       `json:"user_id"`
-	Content        string          `json:"content"`
-	Media          json.RawMessage `json:"media"`
-	Username       string          `json:"username"`
-	CreatedAt      string          `json:"created_at"`
-	UpdatedAt      string          `json:"updated_at"`
-	LikesCount     int             `json:"likes_count"`
-	CommentCount   int             `json:"comments_count"`
-	BookmarksCount int             `json:"bookmarks_count"`
-	ShareCount     int             `json:"shared_count"`
-	Name           string          `json:"name"`
-	ProfilePicture string          `json:"profile_picture"`
-	IsVerified     bool            `json:"is_verified"`
+	ID                 uuid.UUID       `json:"id"`
+	UserID             uuid.UUID       `json:"user_id"`
+	Content            string          `json:"content"`
+	Media              json.RawMessage `json:"media"`
+	Username           string          `json:"username"`
+	CreatedAt          string          `json:"created_at"`
+	UpdatedAt          string          `json:"updated_at"`
+	LikesCount         int             `json:"likes_count"`
+	CommentCount       int             `json:"comments_count"`
+	BookmarksCount     int             `json:"bookmarks_count"`
+	ShareCount         int             `json:"shared_count"`
+	Name               string          `json:"name"`
+	ProfilePicture     string          `json:"profile_picture"`
+	IsVerified         bool            `json:"is_verified"`
+	LikedUsersUsername interface{}     `json:"liked_users"`
 }
 
 func handlePostToPost(dbPost database.GetPostRow) (post Post) {
@@ -157,21 +159,37 @@ func handlePostsToPosts(dbPosts []database.GetUserPostsRow) (posts []Post) {
 	initPosts := []Post{}
 
 	for _, post := range dbPosts {
+
+		usernames := post.LikedUsersUsername
+
+		byteArray, ok := usernames.([]uint8)
+
+		var result string
+
+		if !ok {
+			fmt.Println("failed to convert error")
+		} else {
+			for _, item := range byteArray {
+				result += string(item)
+			}
+		}
+
 		initPosts = append(initPosts, Post{
-			ID:             post.ID,
-			UserID:         post.UserID,
-			Content:        post.Content,
-			Media:          post.Media,
-			Username:       post.Username,
-			CreatedAt:      post.CreatedAt.Format(JavascriptISOString),
-			UpdatedAt:      post.UpdatedAt.Format(JavascriptISOString),
-			LikesCount:     int(post.LikesCount),
-			CommentCount:   int(post.CommentCount),
-			BookmarksCount: int(post.BookmarksCount),
-			ShareCount:     int(post.ShareCount),
-			Name:           post.Name,
-			ProfilePicture: post.ProfilePicture.String,
-			IsVerified:     post.IsVerified.Bool,
+			ID:                 post.ID,
+			UserID:             post.UserID,
+			Content:            post.Content,
+			Media:              post.Media,
+			Username:           post.Username,
+			CreatedAt:          post.CreatedAt.Format(JavascriptISOString),
+			UpdatedAt:          post.UpdatedAt.Format(JavascriptISOString),
+			LikesCount:         int(post.LikesCount),
+			CommentCount:       int(post.CommentCount),
+			BookmarksCount:     int(post.BookmarksCount),
+			ShareCount:         int(post.ShareCount),
+			Name:               post.Name,
+			ProfilePicture:     post.ProfilePicture.String,
+			IsVerified:         post.IsVerified.Bool,
+			LikedUsersUsername: result,
 		})
 	}
 

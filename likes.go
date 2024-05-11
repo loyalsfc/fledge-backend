@@ -17,6 +17,7 @@ type LikesParam struct {
 type Response struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
+	Payload int32  `json:"payload"`
 }
 
 func getPostId(r *http.Request) (uuid.UUID, error) {
@@ -53,11 +54,12 @@ func (apiCfg apiCfg) likePost(w http.ResponseWriter, r *http.Request, username s
 		return
 	}
 
-	apiCfg.DB.UpdateLikeIncrease(r.Context(), postId)
+	data, _ := apiCfg.DB.UpdateLikeIncrease(r.Context(), postId)
 
 	jsonResponse(200, w, Response{
 		Status:  "success",
 		Message: "post successfully liked",
+		Payload: data,
 	})
 
 }
@@ -80,11 +82,16 @@ func (apiCfg apiCfg) unlikePost(w http.ResponseWriter, r *http.Request, username
 		return
 	}
 
-	apiCfg.DB.UpdateLikeDecrease(r.Context(), postId)
+	data, _ := apiCfg.DB.UpdateLikeDecrease(r.Context(), postId)
 
 	jsonResponse(200, w, Response{
 		Status:  "success",
 		Message: "post successfully unliked",
+		Payload: data,
 	})
 
 }
+
+// func (apiCfg apiCfg) postLikes(w http.ResponseWriter, r *http.Request, username string) {
+
+// }
