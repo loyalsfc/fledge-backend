@@ -135,23 +135,40 @@ type Post struct {
 	LikedUsersUsername interface{}     `json:"liked_users"`
 }
 
+func convertUsernamesToString(usernames interface{}) string {
+	byteArray, ok := usernames.([]uint8)
+
+	var result string
+
+	if !ok {
+		fmt.Println("failed to convert error")
+	} else {
+		for _, item := range byteArray {
+			result += string(item)
+		}
+	}
+
+	return result
+}
+
 func handlePostToPost(dbPost database.GetPostRow) (post Post) {
 	JavascriptISOString := "2006-01-02T15:04:05.999Z07:00"
 	return Post{
-		ID:             dbPost.ID,
-		UserID:         dbPost.UserID,
-		Content:        dbPost.Content,
-		Media:          dbPost.Media,
-		Username:       dbPost.Username,
-		CreatedAt:      dbPost.CreatedAt.Format(JavascriptISOString),
-		UpdatedAt:      dbPost.UpdatedAt.Format(JavascriptISOString),
-		LikesCount:     int(dbPost.LikesCount),
-		CommentCount:   int(dbPost.CommentCount),
-		BookmarksCount: int(dbPost.BookmarksCount),
-		ShareCount:     int(dbPost.ShareCount),
-		Name:           dbPost.Name,
-		ProfilePicture: dbPost.ProfilePicture.String,
-		IsVerified:     dbPost.IsVerified.Bool,
+		ID:                 dbPost.ID,
+		UserID:             dbPost.UserID,
+		Content:            dbPost.Content,
+		Media:              dbPost.Media,
+		Username:           dbPost.Username,
+		CreatedAt:          dbPost.CreatedAt.Format(JavascriptISOString),
+		UpdatedAt:          dbPost.UpdatedAt.Format(JavascriptISOString),
+		LikesCount:         int(dbPost.LikesCount),
+		CommentCount:       int(dbPost.CommentCount),
+		BookmarksCount:     int(dbPost.BookmarksCount),
+		ShareCount:         int(dbPost.ShareCount),
+		Name:               dbPost.Name,
+		ProfilePicture:     dbPost.ProfilePicture.String,
+		IsVerified:         dbPost.IsVerified.Bool,
+		LikedUsersUsername: convertUsernamesToString(dbPost.LikedUsersUsername),
 	}
 }
 
@@ -160,21 +177,6 @@ func handlePostsToPosts(dbPosts []database.GetUserPostsRow) (posts []Post) {
 	initPosts := []Post{}
 
 	for _, post := range dbPosts {
-
-		usernames := post.LikedUsersUsername
-
-		byteArray, ok := usernames.([]uint8)
-
-		var result string
-
-		if !ok {
-			fmt.Println("failed to convert error")
-		} else {
-			for _, item := range byteArray {
-				result += string(item)
-			}
-		}
-
 		initPosts = append(initPosts, Post{
 			ID:                 post.ID,
 			UserID:             post.UserID,
@@ -190,7 +192,7 @@ func handlePostsToPosts(dbPosts []database.GetUserPostsRow) (posts []Post) {
 			Name:               post.Name,
 			ProfilePicture:     post.ProfilePicture.String,
 			IsVerified:         post.IsVerified.Bool,
-			LikedUsersUsername: result,
+			LikedUsersUsername: convertUsernamesToString(post.LikedUsersUsername),
 		})
 	}
 
