@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/loyalsfc/fledge-backend/internal/database"
@@ -236,4 +237,46 @@ func handleFeedsToFeeds(dbPosts []database.GetFeedPostsRow) (posts []Post) {
 	}
 
 	return initPosts
+}
+
+type Comment struct {
+	ID             uuid.UUID       `json:"id"`
+	CommentText    string          `json:"comment_text"`
+	Media          json.RawMessage `json:"media"`
+	Username       string          `json:"username"`
+	PostID         uuid.UUID       `json:"post_id"`
+	LikesCount     int32           `json:"likes_count"`
+	ReplyCount     int32           `json:"reply_count"`
+	CreatedAt      time.Time       `json:"created_at"`
+	UpdatedAt      time.Time       `json:"updated_at"`
+	Name           string          `json:"name"`
+	ProfilePicture string          `json:"profile_picture"`
+	IsVerified     bool            `json:"is_verified"`
+}
+
+func handleCommentToComment(dbComment database.GetCommentsRow) (comment Comment) {
+	return Comment{
+		ID:             dbComment.ID,
+		CommentText:    dbComment.CommentText,
+		Media:          dbComment.Media,
+		Username:       dbComment.Username,
+		PostID:         dbComment.PostID,
+		LikesCount:     dbComment.LikesCount,
+		ReplyCount:     dbComment.ReplyCount,
+		CreatedAt:      dbComment.CreatedAt,
+		UpdatedAt:      dbComment.UpdatedAt,
+		Name:           dbComment.Name,
+		ProfilePicture: dbComment.ProfilePicture.String,
+		IsVerified:     dbComment.IsVerified.Bool,
+	}
+}
+
+func handleCommentsToComments(dbComments []database.GetCommentsRow) (comments []Comment) {
+	commentConverts := []Comment{}
+
+	for _, dbComment := range dbComments {
+		commentConverts = append(commentConverts, handleCommentToComment(dbComment))
+	}
+
+	return commentConverts
 }

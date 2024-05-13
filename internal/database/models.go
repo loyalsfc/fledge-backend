@@ -17,6 +17,18 @@ type Bookmark struct {
 	PostID uuid.UUID
 }
 
+type Comment struct {
+	ID          uuid.UUID
+	CommentText string
+	Media       json.RawMessage
+	Username    string
+	PostID      uuid.UUID
+	LikesCount  int32
+	ReplyCount  int32
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
 type Follower struct {
 	FollowerID  uuid.UUID
 	FollowingID uuid.UUID

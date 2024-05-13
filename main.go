@@ -74,6 +74,10 @@ func main() {
 	v1Router.Post("/like-post", apiCfg.middlewareAuth(apiCfg.likePost))
 	v1Router.Post("/unlike-post", apiCfg.middlewareAuth(apiCfg.unlikePost))
 
+	v1Router.Post("/new-comment", apiCfg.middlewareAuth(apiCfg.postComment))
+	v1Router.Delete("/comment/{commentID}", apiCfg.middlewareAuth(apiCfg.deleteComment))
+	v1Router.Get("/post-comments/{postID}", apiCfg.middlewareAuth(apiCfg.getPostComments))
+
 	router.Mount("/v1", v1Router)
 
 	http.ListenAndServe(":3333", router)
