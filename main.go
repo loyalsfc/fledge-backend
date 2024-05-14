@@ -80,6 +80,7 @@ func main() {
 
 	v1Router.Post("/add-bookmarks", apiCfg.middlewareAuth(apiCfg.addBookmarks))
 	v1Router.Post("/remove-bookmarks", apiCfg.middlewareAuth(apiCfg.removeBookmarks))
+	v1Router.Get("/bookmarks", apiCfg.middlewareAuth(apiCfg.getBookmarkedPosts))
 
 	router.Mount("/v1", v1Router)
 

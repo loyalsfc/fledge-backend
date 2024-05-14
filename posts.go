@@ -116,3 +116,14 @@ func (apiCfg apiCfg) getUserFeeds(w http.ResponseWriter, r *http.Request, userna
 
 	jsonResponse(200, w, handleFeedsToFeeds(feeds))
 }
+
+func (apiCfg apiCfg) getBookmarkedPosts(w http.ResponseWriter, r *http.Request, username string) {
+	posts, err := apiCfg.DB.GetBookmarkedPosts(r.Context(), username)
+
+	if err != nil {
+		errResponse(403, w, fmt.Sprintf("error: %v", err))
+		return
+	}
+
+	jsonResponse(200, w, handleBookmarksToBookmarks(posts))
+}

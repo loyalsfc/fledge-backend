@@ -118,21 +118,22 @@ func handleFollowersToFollowers(followList []database.GetFollowersRow) (users []
 }
 
 type Post struct {
-	ID                 uuid.UUID       `json:"id"`
-	UserID             uuid.UUID       `json:"user_id"`
-	Content            string          `json:"content"`
-	Media              json.RawMessage `json:"media"`
-	Username           string          `json:"username"`
-	CreatedAt          string          `json:"created_at"`
-	UpdatedAt          string          `json:"updated_at"`
-	LikesCount         int             `json:"likes_count"`
-	CommentCount       int             `json:"comments_count"`
-	BookmarksCount     int             `json:"bookmarks_count"`
-	ShareCount         int             `json:"shared_count"`
-	Name               string          `json:"name"`
-	ProfilePicture     string          `json:"profile_picture"`
-	IsVerified         bool            `json:"is_verified"`
-	LikedUsersUsername interface{}     `json:"liked_users"`
+	ID                      uuid.UUID       `json:"id"`
+	UserID                  uuid.UUID       `json:"user_id"`
+	Content                 string          `json:"content"`
+	Media                   json.RawMessage `json:"media"`
+	Username                string          `json:"username"`
+	CreatedAt               string          `json:"created_at"`
+	UpdatedAt               string          `json:"updated_at"`
+	LikesCount              int             `json:"likes_count"`
+	CommentCount            int             `json:"comments_count"`
+	BookmarksCount          int             `json:"bookmarks_count"`
+	ShareCount              int             `json:"shared_count"`
+	Name                    string          `json:"name"`
+	ProfilePicture          string          `json:"profile_picture"`
+	IsVerified              bool            `json:"is_verified"`
+	LikedUsersUsername      interface{}     `json:"liked_users"`
+	BookmarkedUsersUsername interface{}     `json:"bookmarked_users"`
 }
 
 func convertUsernamesToString(usernames interface{}) string {
@@ -154,21 +155,22 @@ func convertUsernamesToString(usernames interface{}) string {
 func handlePostToPost(dbPost database.GetPostRow) (post Post) {
 	JavascriptISOString := "2006-01-02T15:04:05.999Z07:00"
 	return Post{
-		ID:                 dbPost.ID,
-		UserID:             dbPost.UserID,
-		Content:            dbPost.Content,
-		Media:              dbPost.Media,
-		Username:           dbPost.Username,
-		CreatedAt:          dbPost.CreatedAt.Format(JavascriptISOString),
-		UpdatedAt:          dbPost.UpdatedAt.Format(JavascriptISOString),
-		LikesCount:         int(dbPost.LikesCount),
-		CommentCount:       int(dbPost.CommentCount),
-		BookmarksCount:     int(dbPost.BookmarksCount),
-		ShareCount:         int(dbPost.ShareCount),
-		Name:               dbPost.Name,
-		ProfilePicture:     dbPost.ProfilePicture.String,
-		IsVerified:         dbPost.IsVerified.Bool,
-		LikedUsersUsername: convertUsernamesToString(dbPost.LikedUsersUsername),
+		ID:                      dbPost.ID,
+		UserID:                  dbPost.UserID,
+		Content:                 dbPost.Content,
+		Media:                   dbPost.Media,
+		Username:                dbPost.Username,
+		CreatedAt:               dbPost.CreatedAt.Format(JavascriptISOString),
+		UpdatedAt:               dbPost.UpdatedAt.Format(JavascriptISOString),
+		LikesCount:              int(dbPost.LikesCount),
+		CommentCount:            int(dbPost.CommentCount),
+		BookmarksCount:          int(dbPost.BookmarksCount),
+		ShareCount:              int(dbPost.ShareCount),
+		Name:                    dbPost.Name,
+		ProfilePicture:          dbPost.ProfilePicture.String,
+		IsVerified:              dbPost.IsVerified.Bool,
+		LikedUsersUsername:      convertUsernamesToString(dbPost.LikedUsersUsername),
+		BookmarkedUsersUsername: convertUsernamesToString(dbPost.BookmarkedUsersUsername),
 	}
 }
 
@@ -178,21 +180,22 @@ func handlePostsToPosts(dbPosts []database.GetUserPostsRow) (posts []Post) {
 
 	for _, post := range dbPosts {
 		initPosts = append(initPosts, Post{
-			ID:                 post.ID,
-			UserID:             post.UserID,
-			Content:            post.Content,
-			Media:              post.Media,
-			Username:           post.Username,
-			CreatedAt:          post.CreatedAt.Format(JavascriptISOString),
-			UpdatedAt:          post.UpdatedAt.Format(JavascriptISOString),
-			LikesCount:         int(post.LikesCount),
-			CommentCount:       int(post.CommentCount),
-			BookmarksCount:     int(post.BookmarksCount),
-			ShareCount:         int(post.ShareCount),
-			Name:               post.Name,
-			ProfilePicture:     post.ProfilePicture.String,
-			IsVerified:         post.IsVerified.Bool,
-			LikedUsersUsername: convertUsernamesToString(post.LikedUsersUsername),
+			ID:                      post.ID,
+			UserID:                  post.UserID,
+			Content:                 post.Content,
+			Media:                   post.Media,
+			Username:                post.Username,
+			CreatedAt:               post.CreatedAt.Format(JavascriptISOString),
+			UpdatedAt:               post.UpdatedAt.Format(JavascriptISOString),
+			LikesCount:              int(post.LikesCount),
+			CommentCount:            int(post.CommentCount),
+			BookmarksCount:          int(post.BookmarksCount),
+			ShareCount:              int(post.ShareCount),
+			Name:                    post.Name,
+			ProfilePicture:          post.ProfilePicture.String,
+			IsVerified:              post.IsVerified.Bool,
+			LikedUsersUsername:      convertUsernamesToString(post.LikedUsersUsername),
+			BookmarkedUsersUsername: convertUsernamesToString(post.BookmarkedUsersUsername),
 		})
 	}
 
@@ -204,37 +207,23 @@ func handleFeedsToFeeds(dbPosts []database.GetFeedPostsRow) (posts []Post) {
 	initPosts := []Post{}
 
 	for _, post := range dbPosts {
-
-		usernames := post.LikedUsersUsername
-
-		byteArray, ok := usernames.([]uint8)
-
-		var result string
-
-		if !ok {
-			fmt.Println("failed to convert error")
-		} else {
-			for _, item := range byteArray {
-				result += string(item)
-			}
-		}
-
 		initPosts = append(initPosts, Post{
-			ID:                 post.ID,
-			UserID:             post.UserID,
-			Content:            post.Content,
-			Media:              post.Media,
-			Username:           post.Username,
-			CreatedAt:          post.CreatedAt.Format(JavascriptISOString),
-			UpdatedAt:          post.UpdatedAt.Format(JavascriptISOString),
-			LikesCount:         int(post.LikesCount),
-			CommentCount:       int(post.CommentCount),
-			BookmarksCount:     int(post.BookmarksCount),
-			ShareCount:         int(post.ShareCount),
-			Name:               post.Name,
-			ProfilePicture:     post.ProfilePicture.String,
-			IsVerified:         post.IsVerified.Bool,
-			LikedUsersUsername: result,
+			ID:                      post.ID,
+			UserID:                  post.UserID,
+			Content:                 post.Content,
+			Media:                   post.Media,
+			Username:                post.Username,
+			CreatedAt:               post.CreatedAt.Format(JavascriptISOString),
+			UpdatedAt:               post.UpdatedAt.Format(JavascriptISOString),
+			LikesCount:              int(post.LikesCount),
+			CommentCount:            int(post.CommentCount),
+			BookmarksCount:          int(post.BookmarksCount),
+			ShareCount:              int(post.ShareCount),
+			Name:                    post.Name,
+			ProfilePicture:          post.ProfilePicture.String,
+			IsVerified:              post.IsVerified.Bool,
+			LikedUsersUsername:      convertUsernamesToString(post.LikedUsersUsername),
+			BookmarkedUsersUsername: convertUsernamesToString(post.BookmarkedUsersUsername),
 		})
 	}
 
@@ -281,4 +270,32 @@ func handleCommentsToComments(dbComments []database.GetCommentsRow) (comments []
 	}
 
 	return commentConverts
+}
+
+func handleBookmarksToBookmarks(dbPosts []database.GetBookmarkedPostsRow) []Post {
+	JavascriptISOString := "2006-01-02T15:04:05.999Z07:00"
+	posts := []Post{}
+
+	for _, dbPost := range dbPosts {
+		posts = append(posts, Post{
+			ID:                      dbPost.ID,
+			UserID:                  dbPost.UserID,
+			Content:                 dbPost.Content,
+			Media:                   dbPost.Media,
+			Username:                dbPost.Username,
+			CreatedAt:               dbPost.CreatedAt.Format(JavascriptISOString),
+			UpdatedAt:               dbPost.UpdatedAt.Format(JavascriptISOString),
+			LikesCount:              int(dbPost.LikesCount),
+			CommentCount:            int(dbPost.CommentCount),
+			BookmarksCount:          int(dbPost.BookmarksCount),
+			ShareCount:              int(dbPost.ShareCount),
+			Name:                    dbPost.Name,
+			ProfilePicture:          dbPost.ProfilePicture.String,
+			IsVerified:              dbPost.IsVerified.Bool,
+			LikedUsersUsername:      convertUsernamesToString(dbPost.LikedUsersUsername),
+			BookmarkedUsersUsername: convertUsernamesToString(dbPost.BookmarkedUsersUsername),
+		})
+	}
+
+	return posts
 }
