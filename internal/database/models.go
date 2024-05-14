@@ -13,8 +13,8 @@ import (
 )
 
 type Bookmark struct {
-	UserID uuid.UUID
-	PostID uuid.UUID
+	Username string
+	PostID   uuid.UUID
 }
 
 type Comment struct {

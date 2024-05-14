@@ -78,6 +78,9 @@ func main() {
 	v1Router.Delete("/comment/{commentID}", apiCfg.middlewareAuth(apiCfg.deleteComment))
 	v1Router.Get("/post-comments/{postID}", apiCfg.middlewareAuth(apiCfg.getPostComments))
 
+	v1Router.Post("/add-bookmarks", apiCfg.middlewareAuth(apiCfg.addBookmarks))
+	v1Router.Post("/remove-bookmarks", apiCfg.middlewareAuth(apiCfg.removeBookmarks))
+
 	router.Mount("/v1", v1Router)
 
 	http.ListenAndServe(":3333", router)

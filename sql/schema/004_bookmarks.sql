@@ -1,9 +1,9 @@
 -- +goose up
 
 CREATE TABLE bookmarks (
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    username TEXT REFERENCES users(username) ON DELETE CASCADE,
     post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, post_id)
+    PRIMARY KEY (username, post_id)
 );
 
 -- +goose Down
