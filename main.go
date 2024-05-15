@@ -82,6 +82,8 @@ func main() {
 	v1Router.Post("/remove-bookmarks", apiCfg.middlewareAuth(apiCfg.removeBookmarks))
 	v1Router.Get("/bookmarks", apiCfg.middlewareAuth(apiCfg.getBookmarkedPosts))
 
+	v1Router.Get("/notifications", apiCfg.middlewareAuth(apiCfg.getUserNotifications))
+
 	router.Mount("/v1", v1Router)
 
 	http.ListenAndServe(":3333", router)

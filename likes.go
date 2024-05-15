@@ -36,6 +36,13 @@ func getPostId(r *http.Request) (uuid.UUID, error) {
 	return postId, nil
 }
 
+func trimToMaxChars(s string, maxChars int) string {
+	if len(s) <= maxChars {
+		return s
+	}
+	return s[:maxChars]
+}
+
 func (apiCfg apiCfg) likePost(w http.ResponseWriter, r *http.Request, username string) {
 	postId, err := getPostId(r)
 
@@ -55,6 +62,19 @@ func (apiCfg apiCfg) likePost(w http.ResponseWriter, r *http.Request, username s
 	}
 
 	data, _ := apiCfg.DB.UpdateLikeIncrease(r.Context(), postId)
+
+	post, err := apiCfg.DB.GetPost(r.Context(), postId)
+
+	if err == nil {
+		apiCfg.createNotification(database.InsertNotificationParams{
+			ID:                  uuid.New(),
+			SenderUsername:      username,
+			ReceiverUsername:    post.Username,
+			Content:             fmt.Sprintf("@%v likes your post: %s", username, trimToMaxChars(post.Content, 100)),
+			NotificationsSource: "likes",
+			Reference:           postId.String(),
+		})
+	}
 
 	jsonResponse(200, w, Response{
 		Status:  "success",
@@ -83,6 +103,11 @@ func (apiCfg apiCfg) unlikePost(w http.ResponseWriter, r *http.Request, username
 	}
 
 	data, _ := apiCfg.DB.UpdateLikeDecrease(r.Context(), postId)
+
+	apiCfg.removeNotification(database.RemoveNotificationParams{
+		SenderUsername: username,
+		Reference:      postId.String(),
+	})
 
 	jsonResponse(200, w, Response{
 		Status:  "success",

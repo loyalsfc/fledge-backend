@@ -10,7 +10,7 @@ CREATE TABLE comments (
     reply_count INT DEFAULT 0 NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
-)
+);
 
 -- +goose Down
-DROP TABLE comments
+DROP TABLE comments;

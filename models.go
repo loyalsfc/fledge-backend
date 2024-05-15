@@ -299,3 +299,38 @@ func handleBookmarksToBookmarks(dbPosts []database.GetBookmarkedPostsRow) []Post
 
 	return posts
 }
+
+type Notification struct {
+	ID                  uuid.UUID `json:"id"`
+	SenderUsername      string    `json:"username"`
+	Content             string    `json:"content"`
+	CreatedAt           string    `json:"created_at"`
+	IsViewed            bool      `json:"is_viewed"`
+	NotificationsSource string    `json:"notification_source"`
+	Reference           string    `json:"reference"`
+	Name                string    `json:"name"`
+	ProfilePicture      string    `json:"profile_picture"`
+	IsVerified          bool      `json:"is_verified"`
+}
+
+func handleNotificationsToNotifications(dbNotifications []database.GetUserNotificationsRow) []Notification {
+	JavascriptISOString := "2006-01-02T15:04:05.999Z07:00"
+	notifications := []Notification{}
+
+	for _, dbNotification := range dbNotifications {
+		notifications = append(notifications, Notification{
+			ID:                  dbNotification.ID,
+			SenderUsername:      dbNotification.SenderUsername,
+			Content:             dbNotification.Content,
+			CreatedAt:           dbNotification.CreatedAt.Format(JavascriptISOString),
+			IsViewed:            dbNotification.IsViewed,
+			NotificationsSource: dbNotification.NotificationsSource,
+			Reference:           dbNotification.Reference,
+			Name:                dbNotification.Name,
+			ProfilePicture:      dbNotification.ProfilePicture.String,
+			IsVerified:          dbNotification.IsVerified.Bool,
+		})
+	}
+
+	return notifications
+}

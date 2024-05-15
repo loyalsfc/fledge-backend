@@ -39,6 +39,17 @@ type Like struct {
 	Username string
 }
 
+type Notification struct {
+	ID                  uuid.UUID
+	SenderUsername      string
+	ReceiverUsername    string
+	Content             string
+	CreatedAt           time.Time
+	IsViewed            bool
+	NotificationsSource string
+	Reference           string
+}
+
 type Post struct {
 	ID             uuid.UUID
 	UserID         uuid.UUID
