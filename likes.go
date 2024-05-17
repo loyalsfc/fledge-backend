@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/loyalsfc/fledge-backend/internal/database"
@@ -73,6 +74,7 @@ func (apiCfg apiCfg) likePost(w http.ResponseWriter, r *http.Request, username s
 			Content:             fmt.Sprintf("@%v likes your post: %s", username, trimToMaxChars(post.Content, 100)),
 			NotificationsSource: "likes",
 			Reference:           postId.String(),
+			CreatedAt:           time.Now(),
 		})
 	}
 
@@ -105,8 +107,9 @@ func (apiCfg apiCfg) unlikePost(w http.ResponseWriter, r *http.Request, username
 	data, _ := apiCfg.DB.UpdateLikeDecrease(r.Context(), postId)
 
 	apiCfg.removeNotification(database.RemoveNotificationParams{
-		SenderUsername: username,
-		Reference:      postId.String(),
+		SenderUsername:      username,
+		Reference:           postId.String(),
+		NotificationsSource: "likes",
 	})
 
 	jsonResponse(200, w, Response{

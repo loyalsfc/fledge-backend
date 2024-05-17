@@ -72,9 +72,9 @@ func (q *Queries) GetUserNotifications(ctx context.Context, receiverUsername str
 
 const insertNotification = `-- name: InsertNotification :exec
 INSERT INTO notifications (
-    id, sender_username, receiver_username, content, notifications_source, reference
+    id, sender_username, receiver_username, content, notifications_source, reference, created_at
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4, $5, $6, $7
 )
 `
 
@@ -85,6 +85,7 @@ type InsertNotificationParams struct {
 	Content             string
 	NotificationsSource string
 	Reference           string
+	CreatedAt           time.Time
 }
 
 func (q *Queries) InsertNotification(ctx context.Context, arg InsertNotificationParams) error {
@@ -95,21 +96,40 @@ func (q *Queries) InsertNotification(ctx context.Context, arg InsertNotification
 		arg.Content,
 		arg.NotificationsSource,
 		arg.Reference,
+		arg.CreatedAt,
 	)
+	return err
+}
+
+const markNotificationAsRead = `-- name: MarkNotificationAsRead :exec
+UPDATE notifications
+    SET is_viewed = true
+WHERE sender_username = $1 AND reference = $2 AND notifications_source = $3
+`
+
+type MarkNotificationAsReadParams struct {
+	SenderUsername      string
+	Reference           string
+	NotificationsSource string
+}
+
+func (q *Queries) MarkNotificationAsRead(ctx context.Context, arg MarkNotificationAsReadParams) error {
+	_, err := q.db.ExecContext(ctx, markNotificationAsRead, arg.SenderUsername, arg.Reference, arg.NotificationsSource)
 	return err
 }
 
 const removeNotification = `-- name: RemoveNotification :exec
 DELETE FROM notifications
-WHERE sender_username = $1 AND reference = $2
+WHERE sender_username = $1 AND reference = $2 AND notifications_source = $3
 `
 
 type RemoveNotificationParams struct {
-	SenderUsername string
-	Reference      string
+	SenderUsername      string
+	Reference           string
+	NotificationsSource string
 }
 
 func (q *Queries) RemoveNotification(ctx context.Context, arg RemoveNotificationParams) error {
-	_, err := q.db.ExecContext(ctx, removeNotification, arg.SenderUsername, arg.Reference)
+	_, err := q.db.ExecContext(ctx, removeNotification, arg.SenderUsername, arg.Reference, arg.NotificationsSource)
 	return err
 }

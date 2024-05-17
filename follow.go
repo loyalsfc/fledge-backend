@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -31,6 +32,20 @@ func (apiCfg apiCfg) follow(w http.ResponseWriter, r *http.Request, username str
 	if err != nil {
 		errResponse(405, w, fmt.Sprintf("Error occured %v", err))
 		return
+	}
+
+	user, err := apiCfg.DB.GetUserById(r.Context(), params.Following)
+
+	if err == nil {
+		apiCfg.createNotification(database.InsertNotificationParams{
+			ID:                  uuid.New(),
+			SenderUsername:      username,
+			ReceiverUsername:    user.Username,
+			Content:             fmt.Sprintf("@%v is now following you", username),
+			NotificationsSource: "follow",
+			Reference:           params.Following.String(),
+			CreatedAt:           time.Now(),
+		})
 	}
 
 	jsonResponse(200, w, follow)
@@ -106,6 +121,12 @@ func (apiCfg apiCfg) unfollow(w http.ResponseWriter, r *http.Request, username s
 		errResponse(400, w, fmt.Sprintf("Error %v", err))
 		return
 	}
+
+	apiCfg.removeNotification(database.RemoveNotificationParams{
+		SenderUsername:      username,
+		Reference:           params.Following.String(),
+		NotificationsSource: "follow",
+	})
 
 	jsonResponse(200, w, params)
 }

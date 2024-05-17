@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -43,6 +44,20 @@ func (apiCfg apiCfg) postComment(w http.ResponseWriter, r *http.Request, usernam
 		return
 	}
 
+	post, err := apiCfg.DB.GetPost(r.Context(), params.PostID)
+
+	if err == nil {
+		apiCfg.createNotification(database.InsertNotificationParams{
+			ID:                  uuid.New(),
+			SenderUsername:      username,
+			ReceiverUsername:    post.Username,
+			Content:             fmt.Sprintf("@%v commented on your post: %s", username, trimToMaxChars(post.Content, 100)),
+			NotificationsSource: "comments",
+			Reference:           params.PostID.String(),
+			CreatedAt:           time.Now(),
+		})
+	}
+
 	jsonResponse(200, w, Response{
 		Status:  "success",
 		Message: "comment deleted successfully",
@@ -73,6 +88,12 @@ func (apiCfg apiCfg) deleteComment(w http.ResponseWriter, r *http.Request, usern
 		errResponse(403, w, fmt.Sprintf("error %v", err))
 		return
 	}
+
+	apiCfg.removeNotification(database.RemoveNotificationParams{
+		SenderUsername:      username,
+		Reference:           commentID.String(),
+		NotificationsSource: "comments",
+	})
 
 	jsonResponse(200, w, Response{
 		Status:  "success",

@@ -83,6 +83,7 @@ func main() {
 	v1Router.Get("/bookmarks", apiCfg.middlewareAuth(apiCfg.getBookmarkedPosts))
 
 	v1Router.Get("/notifications", apiCfg.middlewareAuth(apiCfg.getUserNotifications))
+	v1Router.Put("/update-notification", apiCfg.middlewareAuth(apiCfg.markNotificationAsRead))
 
 	router.Mount("/v1", v1Router)
 
