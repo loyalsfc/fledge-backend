@@ -134,6 +134,8 @@ type Post struct {
 	IsVerified              bool            `json:"is_verified"`
 	LikedUsersUsername      interface{}     `json:"liked_users"`
 	BookmarkedUsersUsername interface{}     `json:"bookmarked_users"`
+	IsSharedPost            bool            `json:"is_shared"`
+	SharedPostID            uuid.UUID       `json:"shared_post_id"`
 }
 
 func convertUsernamesToString(usernames interface{}) string {
@@ -171,6 +173,8 @@ func handlePostToPost(dbPost database.GetPostRow) (post Post) {
 		IsVerified:              dbPost.IsVerified.Bool,
 		LikedUsersUsername:      convertUsernamesToString(dbPost.LikedUsersUsername),
 		BookmarkedUsersUsername: convertUsernamesToString(dbPost.BookmarkedUsersUsername),
+		IsSharedPost:            dbPost.IsSharedPost,
+		SharedPostID:            dbPost.SharedPostID.UUID,
 	}
 }
 
@@ -196,6 +200,8 @@ func handlePostsToPosts(dbPosts []database.GetUserPostsRow) (posts []Post) {
 			IsVerified:              post.IsVerified.Bool,
 			LikedUsersUsername:      convertUsernamesToString(post.LikedUsersUsername),
 			BookmarkedUsersUsername: convertUsernamesToString(post.BookmarkedUsersUsername),
+			IsSharedPost:            post.IsSharedPost,
+			SharedPostID:            post.SharedPostID.UUID,
 		})
 	}
 
@@ -224,6 +230,8 @@ func handleFeedsToFeeds(dbPosts []database.GetFeedPostsRow) (posts []Post) {
 			IsVerified:              post.IsVerified.Bool,
 			LikedUsersUsername:      convertUsernamesToString(post.LikedUsersUsername),
 			BookmarkedUsersUsername: convertUsernamesToString(post.BookmarkedUsersUsername),
+			IsSharedPost:            post.IsSharedPost,
+			SharedPostID:            post.SharedPostID.UUID,
 		})
 	}
 
@@ -294,6 +302,8 @@ func handleBookmarksToBookmarks(dbPosts []database.GetBookmarkedPostsRow) []Post
 			IsVerified:              dbPost.IsVerified.Bool,
 			LikedUsersUsername:      convertUsernamesToString(dbPost.LikedUsersUsername),
 			BookmarkedUsersUsername: convertUsernamesToString(dbPost.BookmarkedUsersUsername),
+			IsSharedPost:            dbPost.IsSharedPost,
+			SharedPostID:            dbPost.SharedPostID.UUID,
 		})
 	}
 

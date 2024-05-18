@@ -62,6 +62,8 @@ type Post struct {
 	CommentCount   int32
 	BookmarksCount int32
 	ShareCount     int32
+	IsSharedPost   bool
+	SharedPostID   uuid.NullUUID
 }
 
 type User struct {

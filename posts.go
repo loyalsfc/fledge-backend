@@ -12,9 +12,11 @@ import (
 )
 
 type PostParams struct {
-	UserID  uuid.UUID       `json:"user_id"`
-	Content string          `json:"content"`
-	Media   json.RawMessage `json:"media"`
+	UserID       uuid.UUID       `json:"user_id"`
+	Content      string          `json:"content"`
+	Media        json.RawMessage `json:"media"`
+	IsShared     bool            `json:"is_shared"`
+	SharedPostId uuid.UUID       `json:"shared_post_id"`
 }
 
 func (apiCfg apiCfg) makePost(w http.ResponseWriter, r *http.Request, username string) {
@@ -24,13 +26,15 @@ func (apiCfg apiCfg) makePost(w http.ResponseWriter, r *http.Request, username s
 	decoder.Decode(&params)
 
 	postId, err := apiCfg.DB.NewPost(r.Context(), database.NewPostParams{
-		ID:        uuid.New(),
-		UserID:    params.UserID,
-		Username:  username,
-		Content:   params.Content,
-		Media:     params.Media,
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
+		ID:           uuid.New(),
+		UserID:       params.UserID,
+		Username:     username,
+		Content:      params.Content,
+		Media:        params.Media,
+		CreatedAt:    time.Now().UTC(),
+		UpdatedAt:    time.Now().UTC(),
+		IsSharedPost: params.IsShared,
+		SharedPostID: uuid.NullUUID{Valid: params.IsShared, UUID: params.SharedPostId},
 	})
 
 	if err != nil {
@@ -43,6 +47,10 @@ func (apiCfg apiCfg) makePost(w http.ResponseWriter, r *http.Request, username s
 	if err != nil {
 		errResponse(401, w, fmt.Sprintf("Error: %v", err))
 		return
+	}
+
+	if params.IsShared {
+		apiCfg.DB.IncreaseShareCount(r.Context(), params.SharedPostId)
 	}
 
 	jsonResponse(200, w, handlePostToPost(post))

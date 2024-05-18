@@ -14,8 +14,22 @@ import (
 	"github.com/google/uuid"
 )
 
+const decreaseShareCount = `-- name: DecreaseShareCount :one
+UPDATE posts
+    SET share_count = share_count - 1
+WHERE id = $1
+RETURNING share_count
+`
+
+func (q *Queries) DecreaseShareCount(ctx context.Context, id uuid.UUID) (int32, error) {
+	row := q.db.QueryRowContext(ctx, decreaseShareCount, id)
+	var share_count int32
+	err := row.Scan(&share_count)
+	return share_count, err
+}
+
 const getBookmarkedPosts = `-- name: GetBookmarkedPosts :many
-SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, u.name, u.profile_picture, u.is_verified,
+SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, p.is_shared_post, p.shared_post_id, u.name, u.profile_picture, u.is_verified,
     array_agg(l.username) AS liked_users_username,
     array_agg(b.username) AS bookmarked_users_username
 FROM posts p
@@ -23,7 +37,7 @@ INNER JOIN users u ON p.user_id = u.id
 LEFT JOIN likes l ON p.id = l.post_id
 INNER JOIN bookmarks b ON p.id = b.post_id
 WHERE b.username = $1
-GROUP BY p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, u.name, u.profile_picture, u.is_verified
+GROUP BY p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, p.is_shared_post, p.shared_post_id, u.name, u.profile_picture, u.is_verified
 `
 
 type GetBookmarkedPostsRow struct {
@@ -38,6 +52,8 @@ type GetBookmarkedPostsRow struct {
 	CommentCount            int32
 	BookmarksCount          int32
 	ShareCount              int32
+	IsSharedPost            bool
+	SharedPostID            uuid.NullUUID
 	Name                    string
 	ProfilePicture          sql.NullString
 	IsVerified              sql.NullBool
@@ -66,6 +82,8 @@ func (q *Queries) GetBookmarkedPosts(ctx context.Context, username string) ([]Ge
 			&i.CommentCount,
 			&i.BookmarksCount,
 			&i.ShareCount,
+			&i.IsSharedPost,
+			&i.SharedPostID,
 			&i.Name,
 			&i.ProfilePicture,
 			&i.IsVerified,
@@ -86,7 +104,7 @@ func (q *Queries) GetBookmarkedPosts(ctx context.Context, username string) ([]Ge
 }
 
 const getFeedPosts = `-- name: GetFeedPosts :many
-SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, u.name, u.profile_picture, u.is_verified,
+SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, p.is_shared_post, p.shared_post_id, u.name, u.profile_picture, u.is_verified,
     array_agg(l.username) AS liked_users_username,
     array_agg(b.username) AS bookmarked_users_username
 FROM posts p
@@ -95,7 +113,7 @@ LEFT JOIN likes l ON p.id = l.post_id
 LEFT JOIN bookmarks b ON p.id = b.post_id
 LEFT JOIN followers f ON p.user_id = f.following_id
 WHERE f.follower_id = $1 OR p.user_id = $1
-GROUP BY p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, u.name, u.profile_picture, u.is_verified
+GROUP BY p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, p.is_shared_post, p.shared_post_id, u.name, u.profile_picture, u.is_verified
 ORDER BY p.created_at DESC
 `
 
@@ -111,6 +129,8 @@ type GetFeedPostsRow struct {
 	CommentCount            int32
 	BookmarksCount          int32
 	ShareCount              int32
+	IsSharedPost            bool
+	SharedPostID            uuid.NullUUID
 	Name                    string
 	ProfilePicture          sql.NullString
 	IsVerified              sql.NullBool
@@ -139,6 +159,8 @@ func (q *Queries) GetFeedPosts(ctx context.Context, followerID uuid.UUID) ([]Get
 			&i.CommentCount,
 			&i.BookmarksCount,
 			&i.ShareCount,
+			&i.IsSharedPost,
+			&i.SharedPostID,
 			&i.Name,
 			&i.ProfilePicture,
 			&i.IsVerified,
@@ -159,7 +181,7 @@ func (q *Queries) GetFeedPosts(ctx context.Context, followerID uuid.UUID) ([]Get
 }
 
 const getPost = `-- name: GetPost :one
-SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, u.name, u.profile_picture, u.is_verified,
+SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, p.is_shared_post, p.shared_post_id, u.name, u.profile_picture, u.is_verified,
     array_agg(l.username) AS liked_users_username,
 	array_agg(b.username) AS bookmarked_users_username
 FROM posts p
@@ -167,7 +189,7 @@ INNER JOIN users u ON p.user_id = u.id
 LEFT JOIN likes l ON p.id = l.post_id
 LEFT JOIN bookmarks b ON p.id = b.post_id
 WHERE p.id = $1
-GROUP BY p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, u.name, u.profile_picture, u.is_verified
+GROUP BY p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, p.is_shared_post, p.shared_post_id, u.name, u.profile_picture, u.is_verified
 ORDER BY p.created_at DESC
 `
 
@@ -183,6 +205,8 @@ type GetPostRow struct {
 	CommentCount            int32
 	BookmarksCount          int32
 	ShareCount              int32
+	IsSharedPost            bool
+	SharedPostID            uuid.NullUUID
 	Name                    string
 	ProfilePicture          sql.NullString
 	IsVerified              sql.NullBool
@@ -205,6 +229,8 @@ func (q *Queries) GetPost(ctx context.Context, id uuid.UUID) (GetPostRow, error)
 		&i.CommentCount,
 		&i.BookmarksCount,
 		&i.ShareCount,
+		&i.IsSharedPost,
+		&i.SharedPostID,
 		&i.Name,
 		&i.ProfilePicture,
 		&i.IsVerified,
@@ -215,7 +241,7 @@ func (q *Queries) GetPost(ctx context.Context, id uuid.UUID) (GetPostRow, error)
 }
 
 const getUserPosts = `-- name: GetUserPosts :many
-SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, u.name, u.profile_picture, u.is_verified,
+SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, p.is_shared_post, p.shared_post_id, u.name, u.profile_picture, u.is_verified,
     array_agg(l.username) AS liked_users_username,
     array_agg(b.username) AS bookmarked_users_username
 FROM posts p
@@ -223,7 +249,7 @@ INNER JOIN users u ON p.user_id = u.id
 LEFT JOIN likes l ON p.id = l.post_id
 LEFT JOIN bookmarks b ON p.id = b.post_id
 WHERE p.username = $1
-GROUP BY p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, u.name, u.profile_picture, u.is_verified
+GROUP BY p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, p.is_shared_post, p.shared_post_id, u.name, u.profile_picture, u.is_verified
 ORDER BY p.created_at DESC
 `
 
@@ -239,6 +265,8 @@ type GetUserPostsRow struct {
 	CommentCount            int32
 	BookmarksCount          int32
 	ShareCount              int32
+	IsSharedPost            bool
+	SharedPostID            uuid.NullUUID
 	Name                    string
 	ProfilePicture          sql.NullString
 	IsVerified              sql.NullBool
@@ -267,6 +295,8 @@ func (q *Queries) GetUserPosts(ctx context.Context, username string) ([]GetUserP
 			&i.CommentCount,
 			&i.BookmarksCount,
 			&i.ShareCount,
+			&i.IsSharedPost,
+			&i.SharedPostID,
 			&i.Name,
 			&i.ProfilePicture,
 			&i.IsVerified,
@@ -286,24 +316,40 @@ func (q *Queries) GetUserPosts(ctx context.Context, username string) ([]GetUserP
 	return items, nil
 }
 
+const increaseShareCount = `-- name: IncreaseShareCount :one
+UPDATE posts
+    SET share_count = share_count + 1
+WHERE id = $1
+RETURNING share_count
+`
+
+func (q *Queries) IncreaseShareCount(ctx context.Context, id uuid.UUID) (int32, error) {
+	row := q.db.QueryRowContext(ctx, increaseShareCount, id)
+	var share_count int32
+	err := row.Scan(&share_count)
+	return share_count, err
+}
+
 const newPost = `-- name: NewPost :one
 
 INSERT INTO posts (
-    id, user_id, username, content, media, created_at, updated_at
+    id, user_id, username, content, media, created_at, updated_at, is_shared_post, shared_post_id
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7
+    $1, $2, $3, $4, $5, $6, $7, $8, $9
 )
 RETURNING id
 `
 
 type NewPostParams struct {
-	ID        uuid.UUID
-	UserID    uuid.UUID
-	Username  string
-	Content   string
-	Media     json.RawMessage
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID           uuid.UUID
+	UserID       uuid.UUID
+	Username     string
+	Content      string
+	Media        json.RawMessage
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	IsSharedPost bool
+	SharedPostID uuid.NullUUID
 }
 
 func (q *Queries) NewPost(ctx context.Context, arg NewPostParams) (uuid.UUID, error) {
@@ -315,6 +361,8 @@ func (q *Queries) NewPost(ctx context.Context, arg NewPostParams) (uuid.UUID, er
 		arg.Media,
 		arg.CreatedAt,
 		arg.UpdatedAt,
+		arg.IsSharedPost,
+		arg.SharedPostID,
 	)
 	var id uuid.UUID
 	err := row.Scan(&id)
