@@ -127,6 +127,59 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const getSuggestedUsers = `-- name: GetSuggestedUsers :many
+SELECT id, name, username, email, password, bio, profession, is_verified, is_active, profile_picture, cover_picture, created_at, updated_at
+FROM (
+  SELECT id, name, username, email, password, bio, profession, is_verified, is_active, profile_picture, cover_picture, created_at, updated_at
+  FROM users
+  WHERE username = 'obambe' AND users.username <> $1
+  UNION ALL
+  SELECT id, name, username, email, password, bio, profession, is_verified, is_active, profile_picture, cover_picture, created_at, updated_at
+  FROM users
+  WHERE username <> 'obambe' AND users.username <> $1
+  LIMIT 4
+) AS random_rows
+ORDER BY RANDOM()
+LIMIT 5
+`
+
+func (q *Queries) GetSuggestedUsers(ctx context.Context, username string) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getSuggestedUsers, username)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Username,
+			&i.Email,
+			&i.Password,
+			&i.Bio,
+			&i.Profession,
+			&i.IsVerified,
+			&i.IsActive,
+			&i.ProfilePicture,
+			&i.CoverPicture,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUser = `-- name: GetUser :one
 SELECT id, name, username, email, password, bio, profession, is_verified, is_active, profile_picture, cover_picture, created_at, updated_at FROM users
 WHERE username = $1 LIMIT 1

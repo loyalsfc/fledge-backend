@@ -41,4 +41,19 @@ UPDATE users
     profession = $4
 WHERE username = $1
 RETURNING *;
-    
+
+
+-- name: GetSuggestedUsers :many
+SELECT *
+FROM (
+  SELECT *
+  FROM users
+  WHERE username = 'obambe' AND users.username <> $1
+  UNION ALL
+  SELECT *
+  FROM users
+  WHERE username <> 'obambe' AND users.username <> $1
+  LIMIT 4
+) AS random_rows
+ORDER BY RANDOM()
+LIMIT 5;

@@ -273,3 +273,14 @@ func (apiCfg apiCfg) updateUserProfile(w http.ResponseWriter, r *http.Request, u
 
 	jsonResponse(200, w, handleUserToUser(user))
 }
+
+func (apiCfg apiCfg) suggestedUsers(w http.ResponseWriter, r *http.Request, username string) {
+	users, err := apiCfg.DB.GetSuggestedUsers(r.Context(), username)
+
+	if err != nil {
+		errResponse(200, w, fmt.Sprintf("error %v", err))
+		return
+	}
+
+	jsonResponse(200, w, handleUsersToUsers(users))
+}
