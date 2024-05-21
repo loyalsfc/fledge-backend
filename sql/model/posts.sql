@@ -66,3 +66,7 @@ UPDATE posts
     SET share_count = share_count - 1
 WHERE id = $1
 RETURNING share_count;
+
+-- name: DeletePost :exec
+DELETE FROM posts
+WHERE id = $1;

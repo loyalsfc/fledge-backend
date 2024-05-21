@@ -135,3 +135,26 @@ func (apiCfg apiCfg) getBookmarkedPosts(w http.ResponseWriter, r *http.Request, 
 
 	jsonResponse(200, w, handleBookmarksToBookmarks(posts))
 }
+
+func (apiCfg apiCfg) deletePost(w http.ResponseWriter, r *http.Request, username string) {
+	idString := chi.URLParam(r, "postID")
+
+	postId, err := uuid.Parse(idString)
+
+	if err != nil {
+		errResponse(403, w, fmt.Sprintf("error %v", err))
+		return
+	}
+
+	deleteErr := apiCfg.DB.DeletePost(r.Context(), postId)
+
+	if deleteErr != nil {
+		errResponse(403, w, fmt.Sprintf("error %v", err))
+		return
+	}
+
+	jsonResponse(200, w, Response{
+		Status:  "success",
+		Message: "post delete successfully",
+	})
+}

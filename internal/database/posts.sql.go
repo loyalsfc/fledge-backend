@@ -28,6 +28,16 @@ func (q *Queries) DecreaseShareCount(ctx context.Context, id uuid.UUID) (int32, 
 	return share_count, err
 }
 
+const deletePost = `-- name: DeletePost :exec
+DELETE FROM posts
+WHERE id = $1
+`
+
+func (q *Queries) DeletePost(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deletePost, id)
+	return err
+}
+
 const getBookmarkedPosts = `-- name: GetBookmarkedPosts :many
 SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, p.is_shared_post, p.shared_post_id, u.name, u.profile_picture, u.is_verified,
     array_agg(l.username) AS liked_users_username,
