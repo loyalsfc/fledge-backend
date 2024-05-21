@@ -79,6 +79,8 @@ func main() {
 	v1Router.Post("/new-comment", apiCfg.middlewareAuth(apiCfg.postComment))
 	v1Router.Delete("/comment/{commentID}", apiCfg.middlewareAuth(apiCfg.deleteComment))
 	v1Router.Get("/post-comments/{postID}", apiCfg.middlewareAuth(apiCfg.getPostComments))
+	v1Router.Post("/like-comment/{postID}", apiCfg.middlewareAuth(apiCfg.likeComment))
+	v1Router.Post("/unlike-comment/{postID}", apiCfg.middlewareAuth(apiCfg.unLikeComment))
 
 	v1Router.Post("/add-bookmarks", apiCfg.middlewareAuth(apiCfg.addBookmarks))
 	v1Router.Post("/remove-bookmarks", apiCfg.middlewareAuth(apiCfg.removeBookmarks))

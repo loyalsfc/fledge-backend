@@ -29,6 +29,11 @@ type Comment struct {
 	UpdatedAt   time.Time
 }
 
+type CommentLike struct {
+	Username  string
+	CommentID uuid.UUID
+}
+
 type Follower struct {
 	FollowerID  uuid.UUID
 	FollowingID uuid.UUID

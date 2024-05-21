@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -138,7 +139,7 @@ type Post struct {
 	SharedPostID            uuid.UUID       `json:"shared_post_id"`
 }
 
-func convertUsernamesToString(usernames interface{}) string {
+func convertUsernamesToString(usernames interface{}) []string {
 	byteArray, ok := usernames.([]uint8)
 
 	var result string
@@ -150,8 +151,15 @@ func convertUsernamesToString(usernames interface{}) string {
 			result += string(item)
 		}
 	}
+	result = strings.Trim(result, "{}")
 
-	return result
+	if result == "null" {
+		return []string{}
+	}
+
+	users := strings.Split(result, ",")
+
+	return users
 }
 
 func handlePostToPost(dbPost database.GetPostRow) (post Post) {
@@ -239,34 +247,36 @@ func handleFeedsToFeeds(dbPosts []database.GetFeedPostsRow) (posts []Post) {
 }
 
 type Comment struct {
-	ID             uuid.UUID       `json:"id"`
-	CommentText    string          `json:"comment_text"`
-	Media          json.RawMessage `json:"media"`
-	Username       string          `json:"username"`
-	PostID         uuid.UUID       `json:"post_id"`
-	LikesCount     int32           `json:"likes_count"`
-	ReplyCount     int32           `json:"reply_count"`
-	CreatedAt      time.Time       `json:"created_at"`
-	UpdatedAt      time.Time       `json:"updated_at"`
-	Name           string          `json:"name"`
-	ProfilePicture string          `json:"profile_picture"`
-	IsVerified     bool            `json:"is_verified"`
+	ID                 uuid.UUID       `json:"id"`
+	CommentText        string          `json:"comment_text"`
+	Media              json.RawMessage `json:"media"`
+	Username           string          `json:"username"`
+	PostID             uuid.UUID       `json:"post_id"`
+	LikesCount         int32           `json:"likes_count"`
+	ReplyCount         int32           `json:"reply_count"`
+	CreatedAt          time.Time       `json:"created_at"`
+	UpdatedAt          time.Time       `json:"updated_at"`
+	Name               string          `json:"name"`
+	ProfilePicture     string          `json:"profile_picture"`
+	IsVerified         bool            `json:"is_verified"`
+	LikedUsersUsername interface{}     `json:"liked_users"`
 }
 
 func handleCommentToComment(dbComment database.GetCommentsRow) (comment Comment) {
 	return Comment{
-		ID:             dbComment.ID,
-		CommentText:    dbComment.CommentText,
-		Media:          dbComment.Media,
-		Username:       dbComment.Username,
-		PostID:         dbComment.PostID,
-		LikesCount:     dbComment.LikesCount,
-		ReplyCount:     dbComment.ReplyCount,
-		CreatedAt:      dbComment.CreatedAt,
-		UpdatedAt:      dbComment.UpdatedAt,
-		Name:           dbComment.Name,
-		ProfilePicture: dbComment.ProfilePicture.String,
-		IsVerified:     dbComment.IsVerified.Bool,
+		ID:                 dbComment.ID,
+		CommentText:        dbComment.CommentText,
+		Media:              dbComment.Media,
+		Username:           dbComment.Username,
+		PostID:             dbComment.PostID,
+		LikesCount:         dbComment.LikesCount,
+		ReplyCount:         dbComment.ReplyCount,
+		CreatedAt:          dbComment.CreatedAt,
+		UpdatedAt:          dbComment.UpdatedAt,
+		Name:               dbComment.Name,
+		ProfilePicture:     dbComment.ProfilePicture.String,
+		IsVerified:         dbComment.IsVerified.Bool,
+		LikedUsersUsername: convertUsernamesToString(dbComment.LikedUsersUsername),
 	}
 }
 

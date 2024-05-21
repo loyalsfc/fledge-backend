@@ -26,25 +26,29 @@ func (q *Queries) DeleteComment(ctx context.Context, id uuid.UUID) error {
 }
 
 const getComments = `-- name: GetComments :many
-SELECT c.id, c.comment_text, c.media, c.username, c.post_id, c.likes_count, c.reply_count, c.created_at, c.updated_at, u.name, u.profile_picture, u.is_verified
+SELECT c.id, c.comment_text, c.media, c.username, c.post_id, c.likes_count, c.reply_count, c.created_at, c.updated_at, u.name, u.profile_picture, u.is_verified,
+    array_agg(l.username) AS liked_users_username
 FROM comments c
 INNER JOIN users u On u.username = c.username
+LEFT JOIN comment_likes l ON l.comment_id =c.id
 WHERE c.post_id = $1
+GROUP BY c.id, c.comment_text, c.media,c.username,c.post_id,c.likes_count,c.reply_count, c.created_at, c.updated_at, u.name, u.profile_picture, u.is_verified
 `
 
 type GetCommentsRow struct {
-	ID             uuid.UUID
-	CommentText    string
-	Media          json.RawMessage
-	Username       string
-	PostID         uuid.UUID
-	LikesCount     int32
-	ReplyCount     int32
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	Name           string
-	ProfilePicture sql.NullString
-	IsVerified     sql.NullBool
+	ID                 uuid.UUID
+	CommentText        string
+	Media              json.RawMessage
+	Username           string
+	PostID             uuid.UUID
+	LikesCount         int32
+	ReplyCount         int32
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	Name               string
+	ProfilePicture     sql.NullString
+	IsVerified         sql.NullBool
+	LikedUsersUsername interface{}
 }
 
 func (q *Queries) GetComments(ctx context.Context, postID uuid.UUID) ([]GetCommentsRow, error) {
@@ -69,6 +73,7 @@ func (q *Queries) GetComments(ctx context.Context, postID uuid.UUID) ([]GetComme
 			&i.Name,
 			&i.ProfilePicture,
 			&i.IsVerified,
+			&i.LikedUsersUsername,
 		); err != nil {
 			return nil, err
 		}

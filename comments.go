@@ -123,3 +123,87 @@ func (apiCfg apiCfg) getPostComments(w http.ResponseWriter, r *http.Request, use
 	jsonResponse(200, w, handleCommentsToComments(comments))
 
 }
+
+func (apiCfg apiCfg) likeComment(w http.ResponseWriter, r *http.Request, username string) {
+	stringID := chi.URLParam(r, "postID")
+
+	commentID, err := uuid.Parse(stringID)
+
+	if err != nil {
+		errResponse(403, w, fmt.Sprintf("error %v:", err))
+		return
+	}
+
+	likesErr := apiCfg.DB.LikeComment(r.Context(), database.LikeCommentParams{
+		Username:  username,
+		CommentID: commentID,
+	})
+
+	if likesErr != nil {
+		errResponse(403, w, fmt.Sprintf("error %v:", likesErr))
+		return
+	}
+
+	response, err := apiCfg.DB.IncreaseCommentLikeCount(r.Context(), commentID)
+
+	if err != nil {
+		errResponse(403, w, fmt.Sprintf("error %v:", err))
+		return
+	}
+
+	apiCfg.DB.InsertNotification(r.Context(), database.InsertNotificationParams{
+		ID:                  uuid.New(),
+		SenderUsername:      username,
+		ReceiverUsername:    response.Username,
+		Content:             fmt.Sprintf("@%v likes your comment %s", username, trimToMaxChars(response.CommentText, 100)),
+		NotificationsSource: "comment-likes",
+		Reference:           commentID.String(),
+		CreatedAt:           time.Now(),
+	})
+
+	jsonResponse(200, w, Response{
+		Status:  "success",
+		Message: "likes added successfully",
+		Payload: response.LikesCount,
+	})
+}
+
+func (apiCfg apiCfg) unLikeComment(w http.ResponseWriter, r *http.Request, username string) {
+	stringID := chi.URLParam(r, "postID")
+
+	commentID, err := uuid.Parse(stringID)
+
+	if err != nil {
+		errResponse(403, w, fmt.Sprintf("error %v:", err))
+		return
+	}
+
+	likesErr := apiCfg.DB.RemoveCommentLike(r.Context(), database.RemoveCommentLikeParams{
+		Username:  username,
+		CommentID: commentID,
+	})
+
+	if likesErr != nil {
+		errResponse(403, w, fmt.Sprintf("error %v:", likesErr))
+		return
+	}
+
+	response, err := apiCfg.DB.DecreaseCommentLikeCount(r.Context(), commentID)
+
+	if err != nil {
+		errResponse(403, w, fmt.Sprintf("error %v:", err))
+		return
+	}
+
+	apiCfg.DB.RemoveNotification(r.Context(), database.RemoveNotificationParams{
+		SenderUsername:      username,
+		Reference:           commentID.String(),
+		NotificationsSource: "comment-likes",
+	})
+
+	jsonResponse(200, w, Response{
+		Status:  "success",
+		Message: "likes removed successfully",
+		Payload: response.LikesCount,
+	})
+}

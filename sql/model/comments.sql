@@ -25,7 +25,10 @@ WHERE id = $1
 RETURNING comment_count;
 
 -- name: GetComments :many
-SELECT c.*, u.name, u.profile_picture, u.is_verified
+SELECT c.*, u.name, u.profile_picture, u.is_verified,
+    array_agg(l.username) AS liked_users_username
 FROM comments c
 INNER JOIN users u On u.username = c.username
-WHERE c.post_id = $1;
+LEFT JOIN comment_likes l ON l.comment_id =c.id
+WHERE c.post_id = $1
+GROUP BY c.id, c.comment_text, c.media,c.username,c.post_id,c.likes_count,c.reply_count, c.created_at, c.updated_at, u.name, u.profile_picture, u.is_verified;
