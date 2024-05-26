@@ -32,3 +32,8 @@ INNER JOIN users u On u.username = c.username
 LEFT JOIN comment_likes l ON l.comment_id =c.id
 WHERE c.post_id = $1
 GROUP BY c.id, c.comment_text, c.media,c.username,c.post_id,c.likes_count,c.reply_count, c.created_at, c.updated_at, u.name, u.profile_picture, u.is_verified;
+
+-- name: GetComment :one
+SELECT comment_text, username 
+FROM comments
+WHERE id = $1;

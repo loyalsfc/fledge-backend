@@ -34,6 +34,17 @@ type CommentLike struct {
 	CommentID uuid.UUID
 }
 
+type CommentReply struct {
+	ID         uuid.UUID
+	ReplyText  string
+	Media      json.RawMessage
+	Username   string
+	CommentID  uuid.UUID
+	LikesCount int32
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+}
+
 type Follower struct {
 	FollowerID  uuid.UUID
 	FollowingID uuid.UUID

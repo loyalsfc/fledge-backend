@@ -354,3 +354,26 @@ func handleNotificationsToNotifications(dbNotifications []database.GetUserNotifi
 
 	return notifications
 }
+
+func handleRepliesToReplies(dbReplies []database.GetRepliesRow) (reply []Comment) {
+	replies := []Comment{}
+
+	for _, reply := range dbReplies {
+		replies = append(replies, Comment{
+			ID:                 reply.ID,
+			CommentText:        reply.ReplyText,
+			Media:              reply.Media,
+			Username:           reply.Username,
+			PostID:             reply.CommentID,
+			LikesCount:         reply.LikesCount,
+			CreatedAt:          reply.CreatedAt,
+			UpdatedAt:          reply.UpdatedAt,
+			Name:               reply.Name,
+			ProfilePicture:     reply.ProfilePicture.String,
+			IsVerified:         reply.IsVerified.Bool,
+			LikedUsersUsername: convertUsernamesToString(reply.LikedUsersUsername),
+		})
+	}
+
+	return replies
+}
