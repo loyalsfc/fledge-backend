@@ -55,6 +55,11 @@ type Like struct {
 	Username string
 }
 
+type LikeReply struct {
+	Username string
+	ReplyID  uuid.UUID
+}
+
 type Notification struct {
 	ID                  uuid.UUID
 	SenderUsername      string

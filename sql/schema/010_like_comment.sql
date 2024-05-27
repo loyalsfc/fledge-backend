@@ -6,6 +6,5 @@ CREATE TABLE comment_likes(
     PRIMARY KEY (username, comment_id)
 )
 
-
 -- +goose Down
 DROP TABLE comment_likes

@@ -108,6 +108,24 @@ func (q *Queries) GetReply(ctx context.Context, id uuid.UUID) (CommentReply, err
 	return i, err
 }
 
+const likeReply = `-- name: LikeReply :exec
+INSERT INTO like_reply(
+    username, reply_id
+) VALUES (
+    $1, $2
+)
+`
+
+type LikeReplyParams struct {
+	Username string
+	ReplyID  uuid.UUID
+}
+
+func (q *Queries) LikeReply(ctx context.Context, arg LikeReplyParams) error {
+	_, err := q.db.ExecContext(ctx, likeReply, arg.Username, arg.ReplyID)
+	return err
+}
+
 const newReply = `-- name: NewReply :exec
 
 INSERT INTO comment_reply (
@@ -137,6 +155,21 @@ func (q *Queries) NewReply(ctx context.Context, arg NewReplyParams) error {
 	return err
 }
 
+const removeReplyLike = `-- name: RemoveReplyLike :exec
+DELETE FROM like_reply
+WHERE username = $1 AND reply_id = $2
+`
+
+type RemoveReplyLikeParams struct {
+	Username string
+	ReplyID  uuid.UUID
+}
+
+func (q *Queries) RemoveReplyLike(ctx context.Context, arg RemoveReplyLikeParams) error {
+	_, err := q.db.ExecContext(ctx, removeReplyLike, arg.Username, arg.ReplyID)
+	return err
+}
+
 const updateReplyDecrease = `-- name: UpdateReplyDecrease :one
 UPDATE comments
     SET reply_count =  reply_count - 1
@@ -163,4 +196,44 @@ func (q *Queries) UpdateReplyIncrease(ctx context.Context, id uuid.UUID) (int32,
 	var reply_count int32
 	err := row.Scan(&reply_count)
 	return reply_count, err
+}
+
+const updateReplyLikesCountDecrease = `-- name: UpdateReplyLikesCountDecrease :one
+UPDATE comment_reply
+    SET likes_count = likes_count + 1
+WHERE id = $1
+RETURNING likes_count, username, reply_text
+`
+
+type UpdateReplyLikesCountDecreaseRow struct {
+	LikesCount int32
+	Username   string
+	ReplyText  string
+}
+
+func (q *Queries) UpdateReplyLikesCountDecrease(ctx context.Context, id uuid.UUID) (UpdateReplyLikesCountDecreaseRow, error) {
+	row := q.db.QueryRowContext(ctx, updateReplyLikesCountDecrease, id)
+	var i UpdateReplyLikesCountDecreaseRow
+	err := row.Scan(&i.LikesCount, &i.Username, &i.ReplyText)
+	return i, err
+}
+
+const updateReplyLikesCountIncrease = `-- name: UpdateReplyLikesCountIncrease :one
+UPDATE comment_reply
+    SET likes_count = likes_count + 1
+WHERE id = $1    
+RETURNING likes_count, username, reply_text
+`
+
+type UpdateReplyLikesCountIncreaseRow struct {
+	LikesCount int32
+	Username   string
+	ReplyText  string
+}
+
+func (q *Queries) UpdateReplyLikesCountIncrease(ctx context.Context, id uuid.UUID) (UpdateReplyLikesCountIncreaseRow, error) {
+	row := q.db.QueryRowContext(ctx, updateReplyLikesCountIncrease, id)
+	var i UpdateReplyLikesCountIncreaseRow
+	err := row.Scan(&i.LikesCount, &i.Username, &i.ReplyText)
+	return i, err
 }
