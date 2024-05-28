@@ -13,10 +13,10 @@ UPDATE posts
 WHERE id = $1
 RETURNING comment_count;
 
--- name: DeleteComment :exec
+-- name: DeleteComment :one
 DELETE FROM comments
 WHERE id = $1
-RETURNING *;
+RETURNING post_id;
 
 -- name: UpdateCommentDecrease :one
 UPDATE posts

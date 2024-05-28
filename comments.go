@@ -75,14 +75,14 @@ func (apiCfg apiCfg) deleteComment(w http.ResponseWriter, r *http.Request, usern
 		return
 	}
 
-	commentErr := apiCfg.DB.DeleteComment(r.Context(), commentID)
+	postID, commentErr := apiCfg.DB.DeleteComment(r.Context(), commentID)
 
 	if commentErr != nil {
 		errResponse(404, w, fmt.Sprintf("error %v", commentErr))
 		return
 	}
 
-	commentCount, err := apiCfg.DB.UpdateCommentDecrease(r.Context(), commentID)
+	commentCount, err := apiCfg.DB.UpdateCommentDecrease(r.Context(), postID)
 
 	if err != nil {
 		errResponse(403, w, fmt.Sprintf("error %v", err))

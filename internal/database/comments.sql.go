@@ -14,15 +14,17 @@ import (
 	"github.com/google/uuid"
 )
 
-const deleteComment = `-- name: DeleteComment :exec
+const deleteComment = `-- name: DeleteComment :one
 DELETE FROM comments
 WHERE id = $1
-RETURNING id, comment_text, media, username, post_id, likes_count, reply_count, created_at, updated_at
+RETURNING post_id
 `
 
-func (q *Queries) DeleteComment(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteComment, id)
-	return err
+func (q *Queries) DeleteComment(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, deleteComment, id)
+	var post_id uuid.UUID
+	err := row.Scan(&post_id)
+	return post_id, err
 }
 
 const getComment = `-- name: GetComment :one
