@@ -12,7 +12,7 @@ import (
 )
 
 type ReplyStruct struct {
-	ReplyText string          `json:"reply_text"`
+	Content   string          `json:"content"`
 	Media     json.RawMessage `json:"media"`
 	CommentId string          `json:"comment_id"`
 }
@@ -33,7 +33,7 @@ func (apiCfg apiCfg) replyComment(w http.ResponseWriter, r *http.Request, userna
 
 	replyErr := apiCfg.DB.NewReply(r.Context(), database.NewReplyParams{
 		ID:        uuid.New(),
-		ReplyText: params.ReplyText,
+		ReplyText: params.Content,
 		Media:     params.Media,
 		Username:  username,
 		CommentID: commentId,
@@ -214,5 +214,38 @@ func (apiCfg apiCfg) unLikeReply(w http.ResponseWriter, r *http.Request, usernam
 		Status:  "success",
 		Message: "likes removed successfully",
 		Payload: response.LikesCount,
+	})
+}
+
+func (apiCfg apiCfg) editReply(w http.ResponseWriter, r *http.Request, username string) {
+	decorder := json.NewDecoder(r.Body)
+
+	params := ReplyStruct{}
+
+	decorder.Decode(&params)
+
+	stringId := chi.URLParam(r, "replyID")
+
+	replyId, err := uuid.Parse(stringId)
+
+	if err != nil {
+		errResponse(403, w, fmt.Sprintf("error %v", err))
+		return
+	}
+
+	replyErr := apiCfg.DB.EditReply(r.Context(), database.EditReplyParams{
+		ReplyText: params.Content,
+		Media:     params.Media,
+		ID:        replyId,
+	})
+
+	if replyErr != nil {
+		errResponse(401, w, fmt.Sprintf("error %v", replyErr))
+		return
+	}
+
+	jsonResponse(200, w, Response{
+		Status:  "success",
+		Message: "reply successful",
 	})
 }

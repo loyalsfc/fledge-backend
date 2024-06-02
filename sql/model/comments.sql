@@ -37,3 +37,10 @@ GROUP BY c.id, c.comment_text, c.media,c.username,c.post_id,c.likes_count,c.repl
 SELECT comment_text, username 
 FROM comments
 WHERE id = $1;
+
+-- name: EditComment :exec
+UPDATE comments
+    SET comment_text = $1,
+    media = $2,
+    updated_at = now()
+WHERE id = $3;

@@ -25,6 +25,25 @@ func (q *Queries) DeleteReply(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const editReply = `-- name: EditReply :exec
+UPDATE comment_reply
+    SET reply_text = $1, 
+    media = $2,
+    updated_at = now()
+WHERE id = $3
+`
+
+type EditReplyParams struct {
+	ReplyText string
+	Media     json.RawMessage
+	ID        uuid.UUID
+}
+
+func (q *Queries) EditReply(ctx context.Context, arg EditReplyParams) error {
+	_, err := q.db.ExecContext(ctx, editReply, arg.ReplyText, arg.Media, arg.ID)
+	return err
+}
+
 const getReplies = `-- name: GetReplies :many
 SELECT c.id, c.reply_text, c.media, c.username, c.comment_id, c.likes_count, c.created_at, c.updated_at, u.name, u.profile_picture, u.is_verified,
     array_agg(l.username) AS liked_users_username

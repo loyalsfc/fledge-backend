@@ -60,3 +60,10 @@ UPDATE comment_reply
     SET likes_count = likes_count + 1
 WHERE id = $1
 RETURNING likes_count, username, reply_text;
+
+-- name: EditReply :exec
+UPDATE comment_reply
+    SET reply_text = $1, 
+    media = $2,
+    updated_at = now()
+WHERE id = $3;

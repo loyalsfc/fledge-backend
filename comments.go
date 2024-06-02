@@ -207,3 +207,36 @@ func (apiCfg apiCfg) unLikeComment(w http.ResponseWriter, r *http.Request, usern
 		Payload: response.LikesCount,
 	})
 }
+
+func (apiCfg apiCfg) editComment(w http.ResponseWriter, r *http.Request, username string) {
+	decorder := json.NewDecoder(r.Body)
+
+	params := CommentParams{}
+
+	decorder.Decode(&params)
+
+	stringId := chi.URLParam(r, "commentID")
+
+	commentId, err := uuid.Parse(stringId)
+
+	if err != nil {
+		errResponse(403, w, fmt.Sprintf("error %v", err))
+		return
+	}
+
+	editErr := apiCfg.DB.EditComment(r.Context(), database.EditCommentParams{
+		CommentText: params.Content,
+		Media:       params.Media,
+		ID:          commentId,
+	})
+
+	if editErr != nil {
+		errResponse(401, w, fmt.Sprintf("error : %v", editErr))
+		return
+	}
+
+	jsonResponse(200, w, Response{
+		Status:  "success",
+		Message: "comment deleted successfully",
+	})
+}

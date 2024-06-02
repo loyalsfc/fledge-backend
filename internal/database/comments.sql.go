@@ -27,6 +27,25 @@ func (q *Queries) DeleteComment(ctx context.Context, id uuid.UUID) (uuid.UUID, e
 	return post_id, err
 }
 
+const editComment = `-- name: EditComment :exec
+UPDATE comments
+    SET comment_text = $1,
+    media = $2,
+    updated_at = now()
+WHERE id = $3
+`
+
+type EditCommentParams struct {
+	CommentText string
+	Media       json.RawMessage
+	ID          uuid.UUID
+}
+
+func (q *Queries) EditComment(ctx context.Context, arg EditCommentParams) error {
+	_, err := q.db.ExecContext(ctx, editComment, arg.CommentText, arg.Media, arg.ID)
+	return err
+}
+
 const getComment = `-- name: GetComment :one
 SELECT comment_text, username 
 FROM comments
