@@ -70,3 +70,10 @@ RETURNING share_count;
 -- name: DeletePost :exec
 DELETE FROM posts
 WHERE id = $1;
+
+-- name: EditPost :exec
+UPDATE posts
+    SET content = $1,
+    media = $2,
+    updated_at = now()
+WHERE id = $3;

@@ -38,6 +38,25 @@ func (q *Queries) DeletePost(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const editPost = `-- name: EditPost :exec
+UPDATE posts
+    SET content = $1,
+    media = $2,
+    updated_at = now()
+WHERE id = $3
+`
+
+type EditPostParams struct {
+	Content string
+	Media   json.RawMessage
+	ID      uuid.UUID
+}
+
+func (q *Queries) EditPost(ctx context.Context, arg EditPostParams) error {
+	_, err := q.db.ExecContext(ctx, editPost, arg.Content, arg.Media, arg.ID)
+	return err
+}
+
 const getBookmarkedPosts = `-- name: GetBookmarkedPosts :many
 SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, p.is_shared_post, p.shared_post_id, u.name, u.profile_picture, u.is_verified,
     array_agg(l.username) AS liked_users_username,

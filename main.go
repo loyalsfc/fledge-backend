@@ -72,6 +72,7 @@ func main() {
 	v1Router.Get("/post/{postID}", apiCfg.middlewareAuth(apiCfg.getPost))
 	v1Router.Get("/feeds", apiCfg.middlewareAuth(apiCfg.getUserFeeds))
 	v1Router.Delete("/post/{postID}", apiCfg.middlewareAuth(apiCfg.deletePost))
+	v1Router.Put("/post/{postID}", apiCfg.middlewareAuth(apiCfg.editPost))
 
 	v1Router.Post("/like-post", apiCfg.middlewareAuth(apiCfg.likePost))
 	v1Router.Post("/unlike-post", apiCfg.middlewareAuth(apiCfg.unlikePost))

@@ -158,3 +158,36 @@ func (apiCfg apiCfg) deletePost(w http.ResponseWriter, r *http.Request, username
 		Message: "post delete successfully",
 	})
 }
+
+func (apiCfg apiCfg) editPost(w http.ResponseWriter, r *http.Request, username string) {
+	idString := chi.URLParam(r, "postID")
+
+	postId, err := uuid.Parse(idString)
+
+	if err != nil {
+		errResponse(403, w, fmt.Sprintf("error %v", err))
+		return
+	}
+
+	decorder := json.NewDecoder(r.Body)
+
+	params := PostParams{}
+
+	decorder.Decode(&params)
+
+	postErr := apiCfg.DB.EditPost(r.Context(), database.EditPostParams{
+		Content: params.Content,
+		Media:   params.Media,
+		ID:      postId,
+	})
+
+	if postErr != nil {
+		errResponse(404, w, fmt.Sprintf("error %v", postErr))
+		return
+	}
+
+	jsonResponse(200, w, Response{
+		Status:  "success",
+		Message: "post edit successful",
+	})
+}
