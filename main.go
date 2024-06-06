@@ -9,9 +9,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
-	"github.com/loyalsfc/fledge-backend/internal/database"
-
 	_ "github.com/lib/pq"
+	"github.com/loyalsfc/fledge-backend/controllers/follow"
+	"github.com/loyalsfc/fledge-backend/controllers/likes"
+	"github.com/loyalsfc/fledge-backend/controllers/post"
+	"github.com/loyalsfc/fledge-backend/controllers/user"
+	"github.com/loyalsfc/fledge-backend/internal/database"
+	"github.com/loyalsfc/fledge-backend/middlewares"
 )
 
 type apiCfg struct {
@@ -52,51 +56,68 @@ func main() {
 		w.Write([]byte("Connected"))
 	})
 
-	v1Router.Get("/users", apiCfg.getUsers)
-	v1Router.Get("/user/{username}", apiCfg.middlewareAuth(apiCfg.getUser))
-	v1Router.Post("/user", apiCfg.createUser)
-	v1Router.Post("/sign", apiCfg.userSignin)
-	v1Router.Get("/suggested-users", apiCfg.middlewareAuth(apiCfg.suggestedUsers))
+	middlewareAuth := middlewares.MiddlewareHandler{
+		DB: db,
+	}
 
-	v1Router.Put("/update-profile-image", apiCfg.middlewareAuth(apiCfg.changeUserProfile))
-	v1Router.Put("/update-cover-image", apiCfg.middlewareAuth(apiCfg.changeUserCoverImage))
-	v1Router.Put("/update-user-profile", apiCfg.middlewareAuth(apiCfg.updateUserProfile))
+	userRoutes := user.ApiCfg{
+		DB: db,
+	}
 
-	v1Router.Post("/follow", apiCfg.middlewareAuth(apiCfg.follow))
-	v1Router.Post("/unfollow", apiCfg.middlewareAuth(apiCfg.unfollow))
-	v1Router.Get("/get-followers/{userID}", apiCfg.middlewareAuth(apiCfg.getFollower))
-	v1Router.Get("/get-following/{userID}", apiCfg.middlewareAuth(apiCfg.getFollowing))
+	v1Router.Get("/users", userRoutes.GetUsers)
+	v1Router.Get("/user/{username}", userRoutes.GetUser)
+	v1Router.Post("/user", userRoutes.CreateUser)
+	v1Router.Post("/sign", userRoutes.Signin)
+	v1Router.Get("/suggested-users", middlewareAuth.MiddlewareAuth(userRoutes.SuggestedUsers))
 
-	v1Router.Post("/new-post", apiCfg.middlewareAuth(apiCfg.makePost))
-	v1Router.Get("/user-posts/{username}", apiCfg.middlewareAuth(apiCfg.getUserPosts))
-	v1Router.Get("/post/{postID}", apiCfg.middlewareAuth(apiCfg.getPost))
-	v1Router.Get("/feeds", apiCfg.middlewareAuth(apiCfg.getUserFeeds))
-	v1Router.Delete("/post/{postID}", apiCfg.middlewareAuth(apiCfg.deletePost))
-	v1Router.Put("/post/{postID}", apiCfg.middlewareAuth(apiCfg.editPost))
+	v1Router.Put("/update-profile-image", middlewareAuth.MiddlewareAuth(userRoutes.ChangeUserProfile))
+	v1Router.Put("/update-cover-image", middlewareAuth.MiddlewareAuth(userRoutes.ChangeUserCoverImage))
+	v1Router.Put("/update-user-profile", middlewareAuth.MiddlewareAuth(userRoutes.UpdateUserProfile))
 
-	v1Router.Post("/like-post", apiCfg.middlewareAuth(apiCfg.likePost))
-	v1Router.Post("/unlike-post", apiCfg.middlewareAuth(apiCfg.unlikePost))
+	followHandler := follow.FollowHandler{
+		DB: db,
+	}
+	v1Router.Post("/follow", middlewareAuth.MiddlewareAuth(followHandler.Follow))
+	v1Router.Post("/unfollow", middlewareAuth.MiddlewareAuth(followHandler.Unfollow))
+	v1Router.Get("/get-followers/{userID}", followHandler.GetFollower)
+	v1Router.Get("/get-following/{userID}", followHandler.GetFollowing)
 
-	v1Router.Post("/new-comment", apiCfg.middlewareAuth(apiCfg.postComment))
-	v1Router.Delete("/comment/{commentID}", apiCfg.middlewareAuth(apiCfg.deleteComment))
-	v1Router.Get("/post-comments/{postID}", apiCfg.middlewareAuth(apiCfg.getPostComments))
-	v1Router.Post("/like-comment/{postID}", apiCfg.middlewareAuth(apiCfg.likeComment))
-	v1Router.Post("/unlike-comment/{postID}", apiCfg.middlewareAuth(apiCfg.unLikeComment))
-	v1Router.Put("/comment/{commentID}", apiCfg.middlewareAuth(apiCfg.editComment))
+	postHandler := post.PostHandler{
+		DB: db,
+	}
+	v1Router.Post("/new-post", middlewareAuth.MiddlewareAuth(postHandler.MakePost))
+	v1Router.Get("/user-posts/{username}", middlewareAuth.MiddlewareAuth(postHandler.GetUserPosts))
+	v1Router.Get("/post/{postID}", postHandler.GetPost)
+	v1Router.Get("/feeds", middlewareAuth.MiddlewareAuth(postHandler.GetUserFeeds))
+	v1Router.Delete("/post/{postID}", middlewareAuth.MiddlewareAuth(postHandler.DeletePost))
+	v1Router.Put("/post/{postID}", middlewareAuth.MiddlewareAuth(postHandler.EditPost))
+
+	likesHandler := likes.LikeHandler{
+		DB: db,
+	}
+	v1Router.Post("/like-post", middlewareAuth.MiddlewareAuth(likesHandler.LikePost))
+	v1Router.Post("/unlike-post", middlewareAuth.MiddlewareAuth(likesHandler.UnlikePost))
+
+	v1Router.Post("/new-comment", middlewareAuth.MiddlewareAuth(apiCfg.postComment))
+	v1Router.Delete("/comment/{commentID}", middlewareAuth.MiddlewareAuth(apiCfg.deleteComment))
+	v1Router.Get("/post-comments/{postID}", middlewareAuth.MiddlewareAuth(apiCfg.getPostComments))
+	v1Router.Post("/like-comment/{postID}", middlewareAuth.MiddlewareAuth(apiCfg.likeComment))
+	v1Router.Post("/unlike-comment/{postID}", middlewareAuth.MiddlewareAuth(apiCfg.unLikeComment))
+	v1Router.Put("/comment/{commentID}", middlewareAuth.MiddlewareAuth(apiCfg.editComment))
 
 	v1Router.Get("/comment-replies/{commentID}", apiCfg.getReplies)
-	v1Router.Post("/reply-comment", apiCfg.middlewareAuth(apiCfg.replyComment))
-	v1Router.Delete("/reply/{replyID}", apiCfg.middlewareAuth(apiCfg.deleteCommetReply))
-	v1Router.Post("/like-reply/{replyID}", apiCfg.middlewareAuth(apiCfg.likeReply))
-	v1Router.Post("/unlike-reply/{replyID}", apiCfg.middlewareAuth(apiCfg.unLikeReply))
-	v1Router.Put("/reply/{replyID}", apiCfg.middlewareAuth(apiCfg.editReply))
+	v1Router.Post("/reply-comment", middlewareAuth.MiddlewareAuth(apiCfg.replyComment))
+	v1Router.Delete("/reply/{replyID}", middlewareAuth.MiddlewareAuth(apiCfg.deleteCommetReply))
+	v1Router.Post("/like-reply/{replyID}", middlewareAuth.MiddlewareAuth(apiCfg.likeReply))
+	v1Router.Post("/unlike-reply/{replyID}", middlewareAuth.MiddlewareAuth(apiCfg.unLikeReply))
+	v1Router.Put("/reply/{replyID}", middlewareAuth.MiddlewareAuth(apiCfg.editReply))
 
-	v1Router.Post("/add-bookmarks", apiCfg.middlewareAuth(apiCfg.addBookmarks))
-	v1Router.Post("/remove-bookmarks", apiCfg.middlewareAuth(apiCfg.removeBookmarks))
-	v1Router.Get("/bookmarks", apiCfg.middlewareAuth(apiCfg.getBookmarkedPosts))
+	v1Router.Post("/add-bookmarks", middlewareAuth.MiddlewareAuth(apiCfg.addBookmarks))
+	v1Router.Post("/remove-bookmarks", middlewareAuth.MiddlewareAuth(apiCfg.removeBookmarks))
+	v1Router.Get("/bookmarks", middlewareAuth.MiddlewareAuth(apiCfg.getBookmarkedPosts))
 
-	v1Router.Get("/notifications", apiCfg.middlewareAuth(apiCfg.getUserNotifications))
-	v1Router.Put("/update-notification", apiCfg.middlewareAuth(apiCfg.markNotificationAsRead))
+	v1Router.Get("/notifications", middlewareAuth.MiddlewareAuth(apiCfg.getUserNotifications))
+	v1Router.Put("/update-notification", middlewareAuth.MiddlewareAuth(apiCfg.markNotificationAsRead))
 
 	router.Mount("/v1", v1Router)
 

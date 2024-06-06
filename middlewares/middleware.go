@@ -1,4 +1,4 @@
-package main
+package middlewares
 
 import (
 	"fmt"
@@ -6,16 +6,24 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/loyalsfc/fledge-backend/internal/auth"
+	"github.com/loyalsfc/fledge-backend/internal/database"
+	"github.com/loyalsfc/fledge-backend/utils"
 )
 
 type authedHandler func(http.ResponseWriter, *http.Request, string)
 
-func (apiCfg *apiCfg) middlewareAuth(handler authedHandler) http.HandlerFunc {
+type MiddlewareHandler struct {
+	DB *database.Queries
+}
+
+var secretKey = []byte("secret-key")
+
+func (h *MiddlewareHandler) MiddlewareAuth(handler authedHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		apiKey, err := auth.GetAPIKey(r.Header)
 
 		if err != nil {
-			errResponse(403, w, fmt.Sprintf("Auth Error: %v", err))
+			utils.ErrResponse(403, w, fmt.Sprintf("Auth Error: %v", err))
 			return
 		}
 
@@ -24,7 +32,7 @@ func (apiCfg *apiCfg) middlewareAuth(handler authedHandler) http.HandlerFunc {
 		})
 
 		if err != nil {
-			errResponse(403, w, fmt.Sprintf("Auth Error: %v", err))
+			utils.ErrResponse(403, w, fmt.Sprintf("Auth Error: %v", err))
 			return
 		}
 

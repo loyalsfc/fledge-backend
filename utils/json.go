@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"encoding/json"
@@ -6,19 +6,25 @@ import (
 	"net/http"
 )
 
-func errResponse(code int, w http.ResponseWriter, msg string) {
+type Response struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	Payload int32  `json:"payload"`
+}
+
+func ErrResponse(code int, w http.ResponseWriter, msg string) {
 	type Error struct {
 		Error string `json:"error"`
 	}
 
-	jsonResponse(code, w, Error{
+	JsonResponse(code, w, Error{
 		Error: msg,
 	})
 
 	log.Println(msg)
 }
 
-func jsonResponse(code int, w http.ResponseWriter, payload interface{}) {
+func JsonResponse(code int, w http.ResponseWriter, payload interface{}) {
 	data, err := json.Marshal(payload)
 
 	if err != nil {

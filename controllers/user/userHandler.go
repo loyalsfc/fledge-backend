@@ -1,4 +1,4 @@
-package main
+package user
 
 import (
 	"database/sql"
@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/loyalsfc/fledge-backend/internal/database"
+	"github.com/loyalsfc/fledge-backend/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -25,25 +25,22 @@ type signin struct {
 	Password string `json:"password"`
 }
 
-type SignInPayload struct {
-	User        database.User
-	AccessToken string
+type ApiCfg struct {
+	DB *database.Queries
 }
 
-var secretKey = []byte("secret-key")
-
-func (apiCfg *apiCfg) getUsers(w http.ResponseWriter, r *http.Request) {
+func (apiCfg *ApiCfg) GetUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := apiCfg.DB.GetUsers(r.Context())
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("Error getting users %v", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("Error getting users %v", err))
 	}
 
-	jsonResponse(200, w, handleUsersToUsers(users))
+	utils.JsonResponse(200, w, utils.HandleUsersToUsers(users))
 
 }
 
-func (apiCfg *apiCfg) createUser(w http.ResponseWriter, r *http.Request) {
+func (apiCfg *ApiCfg) CreateUser(w http.ResponseWriter, r *http.Request) {
 	decorder := json.NewDecoder(r.Body)
 
 	params := parameters{}
@@ -51,7 +48,7 @@ func (apiCfg *apiCfg) createUser(w http.ResponseWriter, r *http.Request) {
 	err := decorder.Decode(&params)
 
 	if err != nil {
-		errResponse(500, w, "invalid parameters")
+		utils.ErrResponse(500, w, "invalid parameters")
 		return
 	}
 
@@ -68,14 +65,14 @@ func (apiCfg *apiCfg) createUser(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		errResponse(400, w, fmt.Sprintf("Error parsing json %v", err))
+		utils.ErrResponse(400, w, fmt.Sprintf("Error parsing json %v", err))
 		return
 	}
 
-	jsonResponse(200, w, handleUserToUser(user))
+	utils.JsonResponse(200, w, utils.HandleUserToUser(user))
 }
 
-func (apiCfg apiCfg) userSignin(w http.ResponseWriter, r *http.Request) {
+func (apiCfg ApiCfg) Signin(w http.ResponseWriter, r *http.Request) {
 	decorder := json.NewDecoder(r.Body)
 
 	params := signin{}
@@ -83,36 +80,36 @@ func (apiCfg apiCfg) userSignin(w http.ResponseWriter, r *http.Request) {
 	err := decorder.Decode(&params)
 
 	if err != nil {
-		errResponse(400, w, fmt.Sprintf("Error paring json %v", err))
+		utils.ErrResponse(400, w, fmt.Sprintf("Error paring json %v", err))
 	}
 
 	user, err := apiCfg.DB.SignIn(r.Context(), params.Email)
 
 	if err != nil {
-		errResponse(401, w, "invalid email or password")
+		utils.ErrResponse(401, w, "invalid email or password")
 		return
 	}
 
-	isPasswordMatched := comparePassword(user.Password, params.Password)
+	isPasswordMatched := utils.ComparePassword(user.Password, params.Password)
 
 	if !isPasswordMatched {
-		errResponse(401, w, "invalid email or password")
+		utils.ErrResponse(401, w, "invalid email or password")
 		return
 	}
 
-	jwtString, err := createToken(user.Username)
+	jwtString, err := utils.CreateToken(user.Username)
 
 	if err != nil {
-		errResponse(500, w, "Internal error occured")
+		utils.ErrResponse(500, w, "Internal error occured")
 		return
 	}
 
-	payload := SignInPayload{
+	payload := utils.SignInPayload{
 		User:        user,
 		AccessToken: jwtString,
 	}
 
-	jsonResponse(200, w, handleLoginToLogin(payload))
+	utils.JsonResponse(200, w, utils.HandleLoginToLogin(payload))
 }
 
 func generateUsername(name string) string {
@@ -147,48 +144,23 @@ func passwordEncryption(password string) string {
 	return string(hashedPassword)
 }
 
-func comparePassword(hashedPassword string, password string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-
-	if err != nil {
-		fmt.Println("Password doesn't match")
-		return false
-	}
-
-	return true
-}
-
-func createToken(username string) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": username,
-	})
-
-	tokenString, err := token.SignedString(secretKey)
-
-	if err != nil {
-		return "", err
-	}
-
-	return tokenString, nil
-}
-
-func (apiCfg apiCfg) getUser(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg ApiCfg) GetUser(w http.ResponseWriter, r *http.Request) {
 	profileUsername := chi.URLParam(r, "username")
 	user, err := apiCfg.DB.GetUser(r.Context(), profileUsername)
 
 	if err != nil {
-		errResponse(404, w, fmt.Sprintf("Error occured: %v", err))
+		utils.ErrResponse(404, w, fmt.Sprintf("Error occured: %v", err))
 		return
 	}
 
-	jsonResponse(200, w, handleUserToUser(user))
+	utils.JsonResponse(200, w, utils.HandleUserToUser(user))
 }
 
 type ProfileImageBody struct {
 	ProfileImage string `json:"profile_image"`
 }
 
-func (apiCfg apiCfg) changeUserProfile(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg ApiCfg) ChangeUserProfile(w http.ResponseWriter, r *http.Request, username string) {
 	decorder := json.NewDecoder(r.Body)
 
 	params := ProfileImageBody{}
@@ -209,17 +181,17 @@ func (apiCfg apiCfg) changeUserProfile(w http.ResponseWriter, r *http.Request, u
 	})
 
 	if err != nil {
-		errResponse(401, w, fmt.Sprintf("An error occured: %v", err))
+		utils.ErrResponse(401, w, fmt.Sprintf("An error occured: %v", err))
 	}
 
-	jsonResponse(200, w, handleUserToUser(user))
+	utils.JsonResponse(200, w, utils.HandleUserToUser(user))
 }
 
 type ProfileCoverBody struct {
 	CoverImage string `json:"cover_image"`
 }
 
-func (apiCfg apiCfg) changeUserCoverImage(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg ApiCfg) ChangeUserCoverImage(w http.ResponseWriter, r *http.Request, username string) {
 	decorder := json.NewDecoder(r.Body)
 
 	params := ProfileCoverBody{}
@@ -240,10 +212,10 @@ func (apiCfg apiCfg) changeUserCoverImage(w http.ResponseWriter, r *http.Request
 	})
 
 	if err != nil {
-		errResponse(401, w, fmt.Sprintf("An error occured: %v", err))
+		utils.ErrResponse(401, w, fmt.Sprintf("An error occured: %v", err))
 	}
 
-	jsonResponse(200, w, handleUserToUser(user))
+	utils.JsonResponse(200, w, utils.HandleUserToUser(user))
 }
 
 type UpdateUserParams struct {
@@ -252,7 +224,7 @@ type UpdateUserParams struct {
 	Profession string `json:"profession"`
 }
 
-func (apiCfg apiCfg) updateUserProfile(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg ApiCfg) UpdateUserProfile(w http.ResponseWriter, r *http.Request, username string) {
 	decoder := json.NewDecoder(r.Body)
 
 	params := UpdateUserParams{}
@@ -267,20 +239,20 @@ func (apiCfg apiCfg) updateUserProfile(w http.ResponseWriter, r *http.Request, u
 	})
 
 	if err != nil {
-		errResponse(400, w, fmt.Sprintf("An error occured %v ", err))
+		utils.ErrResponse(400, w, fmt.Sprintf("An error occured %v ", err))
 		return
 	}
 
-	jsonResponse(200, w, handleUserToUser(user))
+	utils.JsonResponse(200, w, utils.HandleUserToUser(user))
 }
 
-func (apiCfg apiCfg) suggestedUsers(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg ApiCfg) SuggestedUsers(w http.ResponseWriter, r *http.Request, username string) {
 	users, err := apiCfg.DB.GetSuggestedUsers(r.Context(), username)
 
 	if err != nil {
-		errResponse(200, w, fmt.Sprintf("error %v", err))
+		utils.ErrResponse(200, w, fmt.Sprintf("error %v", err))
 		return
 	}
 
-	jsonResponse(200, w, handleUsersToUsers(users))
+	utils.JsonResponse(200, w, utils.HandleUsersToUsers(users))
 }

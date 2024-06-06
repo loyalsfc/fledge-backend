@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"encoding/json"
@@ -30,7 +30,12 @@ type SignInJson struct {
 	AccessToken string `json:"access_token"`
 }
 
-func handleUserToUser(dbUser database.User) (user User) {
+type SignInPayload struct {
+	User        database.User
+	AccessToken string
+}
+
+func HandleUserToUser(dbUser database.User) (user User) {
 	return User{
 		ID:             dbUser.ID,
 		Name:           dbUser.Name,
@@ -47,24 +52,24 @@ func handleUserToUser(dbUser database.User) (user User) {
 	}
 }
 
-func handleUsersToUsers(dbUsers []database.User) (users []User) {
+func HandleUsersToUsers(dbUsers []database.User) (users []User) {
 	convertedUsers := []User{}
 
 	for _, element := range dbUsers {
-		convertedUsers = append(convertedUsers, handleUserToUser(element))
+		convertedUsers = append(convertedUsers, HandleUserToUser(element))
 	}
 
 	return convertedUsers
 }
 
-func handleLoginToLogin(signInPayload SignInPayload) (signInResponse SignInJson) {
+func HandleLoginToLogin(signInPayload SignInPayload) (signInResponse SignInJson) {
 	return SignInJson{
-		User:        handleUserToUser(signInPayload.User),
+		User:        HandleUserToUser(signInPayload.User),
 		AccessToken: signInPayload.AccessToken,
 	}
 }
 
-func handleFollowToFollow(followList database.GetFollowingRow) (user User) {
+func HandleFollowToFollow(followList database.GetFollowingRow) (user User) {
 	return User{
 		ID:             followList.ID,
 		Name:           followList.Name,
@@ -81,17 +86,17 @@ func handleFollowToFollow(followList database.GetFollowingRow) (user User) {
 	}
 }
 
-func handleFollowsToFollows(followList []database.GetFollowingRow) (users []User) {
+func HandleFollowsToFollows(followList []database.GetFollowingRow) (users []User) {
 	usersList := []User{}
 
 	for _, userList := range followList {
-		usersList = append(usersList, handleFollowToFollow(userList))
+		usersList = append(usersList, HandleFollowToFollow(userList))
 	}
 
 	return usersList
 }
 
-func handleFollowerToFollower(followList database.GetFollowersRow) (user User) {
+func HandleFollowerToFollower(followList database.GetFollowersRow) (user User) {
 	return User{
 		ID:             followList.ID,
 		Name:           followList.Name,
@@ -108,11 +113,11 @@ func handleFollowerToFollower(followList database.GetFollowersRow) (user User) {
 	}
 }
 
-func handleFollowersToFollowers(followList []database.GetFollowersRow) (users []User) {
+func HandleFollowersToFollowers(followList []database.GetFollowersRow) (users []User) {
 	usersList := []User{}
 
 	for _, userList := range followList {
-		usersList = append(usersList, handleFollowerToFollower(userList))
+		usersList = append(usersList, HandleFollowerToFollower(userList))
 	}
 
 	return usersList
@@ -162,7 +167,7 @@ func convertUsernamesToString(usernames interface{}) []string {
 	return users
 }
 
-func handlePostToPost(dbPost database.GetPostRow) (post Post) {
+func HandlePostToPost(dbPost database.GetPostRow) (post Post) {
 	JavascriptISOString := "2006-01-02T15:04:05.999Z07:00"
 	return Post{
 		ID:                      dbPost.ID,
@@ -186,7 +191,7 @@ func handlePostToPost(dbPost database.GetPostRow) (post Post) {
 	}
 }
 
-func handlePostsToPosts(dbPosts []database.GetUserPostsRow) (posts []Post) {
+func HandlePostsToPosts(dbPosts []database.GetUserPostsRow) (posts []Post) {
 	JavascriptISOString := "2006-01-02T15:04:05.999Z07:00"
 	initPosts := []Post{}
 
@@ -216,7 +221,7 @@ func handlePostsToPosts(dbPosts []database.GetUserPostsRow) (posts []Post) {
 	return initPosts
 }
 
-func handleFeedsToFeeds(dbPosts []database.GetFeedPostsRow) (posts []Post) {
+func HandleFeedsToFeeds(dbPosts []database.GetFeedPostsRow) (posts []Post) {
 	JavascriptISOString := "2006-01-02T15:04:05.999Z07:00"
 	initPosts := []Post{}
 
@@ -262,7 +267,7 @@ type Comment struct {
 	LikedUsersUsername interface{}     `json:"liked_users"`
 }
 
-func handleCommentToComment(dbComment database.GetCommentsRow) (comment Comment) {
+func HandleCommentToComment(dbComment database.GetCommentsRow) (comment Comment) {
 	return Comment{
 		ID:                 dbComment.ID,
 		CommentText:        dbComment.CommentText,
@@ -280,17 +285,17 @@ func handleCommentToComment(dbComment database.GetCommentsRow) (comment Comment)
 	}
 }
 
-func handleCommentsToComments(dbComments []database.GetCommentsRow) (comments []Comment) {
+func HandleCommentsToComments(dbComments []database.GetCommentsRow) (comments []Comment) {
 	commentConverts := []Comment{}
 
 	for _, dbComment := range dbComments {
-		commentConverts = append(commentConverts, handleCommentToComment(dbComment))
+		commentConverts = append(commentConverts, HandleCommentToComment(dbComment))
 	}
 
 	return commentConverts
 }
 
-func handleBookmarksToBookmarks(dbPosts []database.GetBookmarkedPostsRow) []Post {
+func HandleBookmarksToBookmarks(dbPosts []database.GetBookmarkedPostsRow) []Post {
 	JavascriptISOString := "2006-01-02T15:04:05.999Z07:00"
 	posts := []Post{}
 
@@ -333,7 +338,7 @@ type Notification struct {
 	IsVerified          bool      `json:"is_verified"`
 }
 
-func handleNotificationsToNotifications(dbNotifications []database.GetUserNotificationsRow) []Notification {
+func HandleNotificationsToNotifications(dbNotifications []database.GetUserNotificationsRow) []Notification {
 	JavascriptISOString := "2006-01-02T15:04:05.999Z07:00"
 	notifications := []Notification{}
 
@@ -355,7 +360,7 @@ func handleNotificationsToNotifications(dbNotifications []database.GetUserNotifi
 	return notifications
 }
 
-func handleRepliesToReplies(dbReplies []database.GetRepliesRow) (reply []Comment) {
+func HandleRepliesToReplies(dbReplies []database.GetRepliesRow) (reply []Comment) {
 	replies := []Comment{}
 
 	for _, reply := range dbReplies {

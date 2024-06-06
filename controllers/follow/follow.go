@@ -1,4 +1,4 @@
-package main
+package follow
 
 import (
 	"encoding/json"
@@ -9,7 +9,9 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/loyalsfc/fledge-backend/controllers/notification"
 	"github.com/loyalsfc/fledge-backend/internal/database"
+	"github.com/loyalsfc/fledge-backend/utils"
 )
 
 type FollowParams struct {
@@ -17,7 +19,11 @@ type FollowParams struct {
 	Follower  uuid.UUID `json:"follower"`
 }
 
-func (apiCfg apiCfg) follow(w http.ResponseWriter, r *http.Request, username string) {
+type FollowHandler struct {
+	DB *database.Queries
+}
+
+func (apiCfg FollowHandler) Follow(w http.ResponseWriter, r *http.Request, username string) {
 	decorder := json.NewDecoder(r.Body)
 
 	params := FollowParams{}
@@ -30,14 +36,14 @@ func (apiCfg apiCfg) follow(w http.ResponseWriter, r *http.Request, username str
 	})
 
 	if err != nil {
-		errResponse(405, w, fmt.Sprintf("Error occured %v", err))
+		utils.ErrResponse(405, w, fmt.Sprintf("Error occured %v", err))
 		return
 	}
 
 	user, err := apiCfg.DB.GetUserById(r.Context(), params.Following)
 
 	if err == nil {
-		apiCfg.createNotification(database.InsertNotificationParams{
+		notification.NotificationHandler.CreateNotification(notification.NotificationHandler{}, database.InsertNotificationParams{
 			ID:                  uuid.New(),
 			SenderUsername:      username,
 			ReceiverUsername:    user.Username,
@@ -48,7 +54,7 @@ func (apiCfg apiCfg) follow(w http.ResponseWriter, r *http.Request, username str
 		})
 	}
 
-	jsonResponse(200, w, follow)
+	utils.JsonResponse(200, w, follow)
 }
 
 func getIdFromParams(r *http.Request) (uuid.UUID, error) {
@@ -67,45 +73,45 @@ func getIdFromParams(r *http.Request) (uuid.UUID, error) {
 	return userId, nil
 }
 
-func (apiCfg apiCfg) getFollower(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg FollowHandler) GetFollower(w http.ResponseWriter, r *http.Request) {
 
 	userId, err := getIdFromParams(r)
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("Error occured %v ", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("Error occured %v ", err))
 		return
 	}
 
 	list, err := apiCfg.DB.GetFollowers(r.Context(), userId)
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("Error occured %v ", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("Error occured %v ", err))
 		return
 	}
 
-	jsonResponse(200, w, handleFollowersToFollowers(list))
+	utils.JsonResponse(200, w, utils.HandleFollowersToFollowers(list))
 }
 
-func (apiCfg apiCfg) getFollowing(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg FollowHandler) GetFollowing(w http.ResponseWriter, r *http.Request) {
 
 	userId, err := getIdFromParams(r)
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("Error occured %v ", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("Error occured %v ", err))
 		return
 	}
 
 	list, err := apiCfg.DB.GetFollowing(r.Context(), userId)
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("Error occured %v ", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("Error occured %v ", err))
 		return
 	}
 
-	jsonResponse(200, w, handleFollowsToFollows(list))
+	utils.JsonResponse(200, w, utils.HandleFollowsToFollows(list))
 }
 
-func (apiCfg apiCfg) unfollow(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg FollowHandler) Unfollow(w http.ResponseWriter, r *http.Request, username string) {
 	decorder := json.NewDecoder(r.Body)
 
 	params := FollowParams{}
@@ -118,15 +124,15 @@ func (apiCfg apiCfg) unfollow(w http.ResponseWriter, r *http.Request, username s
 	})
 
 	if err != nil {
-		errResponse(400, w, fmt.Sprintf("Error %v", err))
+		utils.ErrResponse(400, w, fmt.Sprintf("Error %v", err))
 		return
 	}
 
-	apiCfg.removeNotification(database.RemoveNotificationParams{
+	notification.NotificationHandler.RemoveNotification(notification.NotificationHandler{}, database.RemoveNotificationParams{
 		SenderUsername:      username,
 		Reference:           params.Following.String(),
 		NotificationsSource: "follow",
 	})
 
-	jsonResponse(200, w, params)
+	utils.JsonResponse(200, w, params)
 }

@@ -1,4 +1,4 @@
-package main
+package post
 
 import (
 	"encoding/json"
@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/loyalsfc/fledge-backend/internal/database"
+	"github.com/loyalsfc/fledge-backend/utils"
 )
 
 type PostParams struct {
@@ -19,7 +20,11 @@ type PostParams struct {
 	SharedPostId uuid.UUID       `json:"shared_post_id"`
 }
 
-func (apiCfg apiCfg) makePost(w http.ResponseWriter, r *http.Request, username string) {
+type PostHandler struct {
+	DB *database.Queries
+}
+
+func (apiCfg PostHandler) MakePost(w http.ResponseWriter, r *http.Request, username string) {
 	decoder := json.NewDecoder(r.Body)
 	params := PostParams{}
 
@@ -38,14 +43,14 @@ func (apiCfg apiCfg) makePost(w http.ResponseWriter, r *http.Request, username s
 	})
 
 	if err != nil {
-		errResponse(400, w, fmt.Sprintf("Error %v ", err))
+		utils.ErrResponse(400, w, fmt.Sprintf("Error %v ", err))
 		return
 	}
 
 	post, err := apiCfg.DB.GetPost(r.Context(), postId)
 
 	if err != nil {
-		errResponse(401, w, fmt.Sprintf("Error: %v", err))
+		utils.ErrResponse(401, w, fmt.Sprintf("Error: %v", err))
 		return
 	}
 
@@ -53,119 +58,119 @@ func (apiCfg apiCfg) makePost(w http.ResponseWriter, r *http.Request, username s
 		apiCfg.DB.IncreaseShareCount(r.Context(), params.SharedPostId)
 	}
 
-	jsonResponse(200, w, handlePostToPost(post))
+	utils.JsonResponse(200, w, utils.HandlePostToPost(post))
 }
 
-func (apiCfg apiCfg) getUserPosts(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg PostHandler) GetUserPosts(w http.ResponseWriter, r *http.Request, username string) {
 	profileUsername := chi.URLParam(r, "username")
 
 	if profileUsername == "" {
-		errResponse(200, w, "Invalid username")
+		utils.ErrResponse(200, w, "Invalid username")
 		return
 	}
 
 	posts, err := apiCfg.DB.GetUserPosts(r.Context(), profileUsername)
 
 	if err != nil {
-		errResponse(401, w, fmt.Sprintf("Error: %v", err))
+		utils.ErrResponse(401, w, fmt.Sprintf("Error: %v", err))
 		return
 	}
 
-	jsonResponse(200, w, handlePostsToPosts(posts))
+	utils.JsonResponse(200, w, utils.HandlePostsToPosts(posts))
 
 }
 
-func (apiCfg apiCfg) getPost(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg PostHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 	postId := chi.URLParam(r, "postID")
 
 	if postId == "" {
-		errResponse(404, w, "post id not found")
+		utils.ErrResponse(404, w, "post id not found")
 		return
 	}
 
 	id, err := uuid.Parse(postId)
 
 	if err != nil {
-		errResponse(403, w, "invalid post id")
+		utils.ErrResponse(403, w, "invalid post id")
 		return
 	}
 
 	post, err := apiCfg.DB.GetPost(r.Context(), id)
 
 	if err != nil {
-		errResponse(400, w, fmt.Sprintf("error %v ", err))
+		utils.ErrResponse(400, w, fmt.Sprintf("error %v ", err))
 		return
 	}
 
-	jsonResponse(200, w, handlePostToPost(post))
+	utils.JsonResponse(200, w, utils.HandlePostToPost(post))
 }
 
-func (apiCfg apiCfg) getUserFeeds(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg PostHandler) GetUserFeeds(w http.ResponseWriter, r *http.Request, username string) {
 	var idString string = r.URL.Query().Get("id")
 
 	if idString == "" {
-		errResponse(401, w, "no id found")
+		utils.ErrResponse(401, w, "no id found")
 		return
 	}
 
 	userID, err := uuid.Parse(idString)
 
 	if err != nil {
-		errResponse(401, w, fmt.Sprintf("error: %v", err))
+		utils.ErrResponse(401, w, fmt.Sprintf("error: %v", err))
 		return
 	}
 
 	feeds, err := apiCfg.DB.GetFeedPosts(r.Context(), userID)
 
 	if err != nil {
-		errResponse(401, w, fmt.Sprintf("error: %v", err))
+		utils.ErrResponse(401, w, fmt.Sprintf("error: %v", err))
 		return
 	}
 
-	jsonResponse(200, w, handleFeedsToFeeds(feeds))
+	utils.JsonResponse(200, w, utils.HandleFeedsToFeeds(feeds))
 }
 
-func (apiCfg apiCfg) getBookmarkedPosts(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg PostHandler) GetBookmarkedPosts(w http.ResponseWriter, r *http.Request, username string) {
 	posts, err := apiCfg.DB.GetBookmarkedPosts(r.Context(), username)
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("error: %v", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("error: %v", err))
 		return
 	}
 
-	jsonResponse(200, w, handleBookmarksToBookmarks(posts))
+	utils.JsonResponse(200, w, utils.HandleBookmarksToBookmarks(posts))
 }
 
-func (apiCfg apiCfg) deletePost(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg PostHandler) DeletePost(w http.ResponseWriter, r *http.Request, username string) {
 	idString := chi.URLParam(r, "postID")
 
 	postId, err := uuid.Parse(idString)
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("error %v", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("error %v", err))
 		return
 	}
 
 	deleteErr := apiCfg.DB.DeletePost(r.Context(), postId)
 
 	if deleteErr != nil {
-		errResponse(403, w, fmt.Sprintf("error %v", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("error %v", err))
 		return
 	}
 
-	jsonResponse(200, w, Response{
+	utils.JsonResponse(200, w, utils.Response{
 		Status:  "success",
 		Message: "post delete successfully",
 	})
 }
 
-func (apiCfg apiCfg) editPost(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg PostHandler) EditPost(w http.ResponseWriter, r *http.Request, username string) {
 	idString := chi.URLParam(r, "postID")
 
 	postId, err := uuid.Parse(idString)
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("error %v", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("error %v", err))
 		return
 	}
 
@@ -182,11 +187,11 @@ func (apiCfg apiCfg) editPost(w http.ResponseWriter, r *http.Request, username s
 	})
 
 	if postErr != nil {
-		errResponse(404, w, fmt.Sprintf("error %v", postErr))
+		utils.ErrResponse(404, w, fmt.Sprintf("error %v", postErr))
 		return
 	}
 
-	jsonResponse(200, w, Response{
+	utils.JsonResponse(200, w, utils.Response{
 		Status:  "success",
 		Message: "post edit successful",
 	})
