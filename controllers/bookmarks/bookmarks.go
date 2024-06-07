@@ -1,4 +1,4 @@
-package main
+package bookmarks
 
 import (
 	"encoding/json"
@@ -7,13 +7,18 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/loyalsfc/fledge-backend/internal/database"
+	"github.com/loyalsfc/fledge-backend/utils"
 )
 
 type BoookmarksParam struct {
 	PostID string `json:"post_id"`
 }
 
-func (apiCfg apiCfg) addBookmarks(w http.ResponseWriter, r *http.Request, username string) {
+type BookMarkHandler struct {
+	DB *database.Queries
+}
+
+func (apiCfg BookMarkHandler) AddBookmarks(w http.ResponseWriter, r *http.Request, username string) {
 	decorder := json.NewDecoder(r.Body)
 
 	params := BoookmarksParam{}
@@ -23,7 +28,7 @@ func (apiCfg apiCfg) addBookmarks(w http.ResponseWriter, r *http.Request, userna
 	postID, err := uuid.Parse(params.PostID)
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("error %v", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("error %v", err))
 		return
 	}
 
@@ -33,25 +38,25 @@ func (apiCfg apiCfg) addBookmarks(w http.ResponseWriter, r *http.Request, userna
 	})
 
 	if bookmarkErr != nil {
-		errResponse(403, w, fmt.Sprintf("error %v", bookmarkErr))
+		utils.ErrResponse(403, w, fmt.Sprintf("error %v", bookmarkErr))
 		return
 	}
 
 	bookmarksCount, err := apiCfg.DB.UpdateBookmarksIncrease(r.Context(), postID)
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("error %v", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("error %v", err))
 		return
 	}
 
-	jsonResponse(200, w, Response{
+	utils.JsonResponse(200, w, utils.Response{
 		Status:  "successful",
 		Message: "bookmark added",
 		Payload: bookmarksCount,
 	})
 }
 
-func (apiCfg apiCfg) removeBookmarks(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg BookMarkHandler) RemoveBookmarks(w http.ResponseWriter, r *http.Request, username string) {
 	decorder := json.NewDecoder(r.Body)
 
 	params := BoookmarksParam{}
@@ -61,7 +66,7 @@ func (apiCfg apiCfg) removeBookmarks(w http.ResponseWriter, r *http.Request, use
 	postID, err := uuid.Parse(params.PostID)
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("error %v", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("error %v", err))
 		return
 	}
 
@@ -71,18 +76,18 @@ func (apiCfg apiCfg) removeBookmarks(w http.ResponseWriter, r *http.Request, use
 	})
 
 	if bookmarkErr != nil {
-		errResponse(403, w, fmt.Sprintf("error %v", bookmarkErr))
+		utils.ErrResponse(403, w, fmt.Sprintf("error %v", bookmarkErr))
 		return
 	}
 
 	bookmarksCount, err := apiCfg.DB.UpdateBookmarksDecrease(r.Context(), postID)
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("error %v", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("error %v", err))
 		return
 	}
 
-	jsonResponse(200, w, Response{
+	utils.JsonResponse(200, w, utils.Response{
 		Status:  "successful",
 		Message: "bookmark added",
 		Payload: bookmarksCount,

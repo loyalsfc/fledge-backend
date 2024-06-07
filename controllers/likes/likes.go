@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/loyalsfc/fledge-backend/controllers/notification"
 	"github.com/loyalsfc/fledge-backend/internal/database"
 	"github.com/loyalsfc/fledge-backend/utils"
 )
@@ -27,7 +26,7 @@ func (apiCfg LikeHandler) LikePost(w http.ResponseWriter, r *http.Request, usern
 		Username: username,
 		PostID:   postId,
 	})
-
+	fmt.Println("done")
 	if errRes != nil {
 		utils.ErrResponse(501, w, fmt.Sprintf("error %v:", errRes))
 		return
@@ -38,7 +37,7 @@ func (apiCfg LikeHandler) LikePost(w http.ResponseWriter, r *http.Request, usern
 	post, err := apiCfg.DB.GetPost(r.Context(), postId)
 
 	if err == nil {
-		notification.NotificationHandler.CreateNotification(notification.NotificationHandler{}, database.InsertNotificationParams{
+		apiCfg.DB.InsertNotification(r.Context(), database.InsertNotificationParams{
 			ID:                  uuid.New(),
 			SenderUsername:      username,
 			ReceiverUsername:    post.Username,
@@ -77,7 +76,7 @@ func (apiCfg LikeHandler) UnlikePost(w http.ResponseWriter, r *http.Request, use
 
 	data, _ := apiCfg.DB.UpdateLikeDecrease(r.Context(), postId)
 
-	notification.NotificationHandler.RemoveNotification(notification.NotificationHandler{}, database.RemoveNotificationParams{
+	apiCfg.DB.RemoveNotification(r.Context(), database.RemoveNotificationParams{
 		SenderUsername:      username,
 		Reference:           postId.String(),
 		NotificationsSource: "likes",
@@ -90,7 +89,3 @@ func (apiCfg LikeHandler) UnlikePost(w http.ResponseWriter, r *http.Request, use
 	})
 
 }
-
-// func (apiCfg LikeHandler) postLikes(w http.ResponseWriter, r *http.Request, username string) {
-
-// }

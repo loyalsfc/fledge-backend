@@ -1,4 +1,4 @@
-package main
+package replies
 
 import (
 	"encoding/json"
@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/loyalsfc/fledge-backend/internal/database"
+	"github.com/loyalsfc/fledge-backend/utils"
 )
 
 type ReplyStruct struct {
@@ -17,7 +18,11 @@ type ReplyStruct struct {
 	CommentId string          `json:"comment_id"`
 }
 
-func (apiCfg apiCfg) replyComment(w http.ResponseWriter, r *http.Request, username string) {
+type ReplyHandler struct {
+	DB *database.Queries
+}
+
+func (apiCfg ReplyHandler) ReplyComment(w http.ResponseWriter, r *http.Request, username string) {
 	decorder := json.NewDecoder(r.Body)
 
 	params := ReplyStruct{}
@@ -27,7 +32,7 @@ func (apiCfg apiCfg) replyComment(w http.ResponseWriter, r *http.Request, userna
 	commentId, err := uuid.Parse(params.CommentId)
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("error %v", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("error %v", err))
 		return
 	}
 
@@ -40,14 +45,14 @@ func (apiCfg apiCfg) replyComment(w http.ResponseWriter, r *http.Request, userna
 	})
 
 	if replyErr != nil {
-		errResponse(401, w, fmt.Sprintf("error %v", replyErr))
+		utils.ErrResponse(401, w, fmt.Sprintf("error %v", replyErr))
 		return
 	}
 
 	comment, err := apiCfg.DB.GetComment(r.Context(), commentId)
 
 	if err != nil {
-		errResponse(401, w, fmt.Sprintf("error %v", err))
+		utils.ErrResponse(401, w, fmt.Sprintf("error %v", err))
 		return
 	}
 
@@ -55,7 +60,7 @@ func (apiCfg apiCfg) replyComment(w http.ResponseWriter, r *http.Request, userna
 		ID:                  uuid.New(),
 		SenderUsername:      username,
 		ReceiverUsername:    comment.Username,
-		Content:             fmt.Sprintf("@%v replied to your comment %s", username, trimToMaxChars(comment.CommentText, 100)),
+		Content:             fmt.Sprintf("@%v replied to your comment %s", username, utils.TrimToMaxChars(comment.CommentText, 100)),
 		NotificationsSource: "comment-reply",
 		Reference:           params.CommentId,
 		CreatedAt:           time.Now(),
@@ -63,34 +68,34 @@ func (apiCfg apiCfg) replyComment(w http.ResponseWriter, r *http.Request, userna
 
 	count, _ := apiCfg.DB.UpdateReplyIncrease(r.Context(), commentId)
 
-	jsonResponse(200, w, Response{
+	utils.JsonResponse(200, w, utils.Response{
 		Status:  "success",
 		Message: "reply successful",
 		Payload: count,
 	})
 }
 
-func (apiCfg apiCfg) deleteCommetReply(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg ReplyHandler) DeleteCommetReply(w http.ResponseWriter, r *http.Request, username string) {
 	idstring := chi.URLParam(r, "replyID")
 
 	replyId, err := uuid.Parse(idstring)
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("error %v", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("error %v", err))
 		return
 	}
 
 	reply, err := apiCfg.DB.GetReply(r.Context(), replyId)
 
 	if err != nil {
-		errResponse(401, w, fmt.Sprintf("error %v", err))
+		utils.ErrResponse(401, w, fmt.Sprintf("error %v", err))
 		return
 	}
 
 	replyErr := apiCfg.DB.DeleteReply(r.Context(), replyId)
 
 	if replyErr != nil {
-		errResponse(401, w, fmt.Sprintf("error %v", replyErr))
+		utils.ErrResponse(401, w, fmt.Sprintf("error %v", replyErr))
 		return
 	}
 
@@ -106,40 +111,40 @@ func (apiCfg apiCfg) deleteCommetReply(w http.ResponseWriter, r *http.Request, u
 		fmt.Println("err", err)
 	}
 
-	jsonResponse(200, w, Response{
+	utils.JsonResponse(200, w, utils.Response{
 		Status:  "success",
 		Message: "reply successful",
 		Payload: count,
 	})
 }
 
-func (apiCfg apiCfg) getReplies(w http.ResponseWriter, r *http.Request) {
+func (apiCfg ReplyHandler) GetReplies(w http.ResponseWriter, r *http.Request) {
 	idString := chi.URLParam(r, "commentID")
 
 	commentId, err := uuid.Parse(idString)
 
 	if err != nil {
-		errResponse(401, w, fmt.Sprintf("error %v", err))
+		utils.ErrResponse(401, w, fmt.Sprintf("error %v", err))
 		return
 	}
 
 	replies, err := apiCfg.DB.GetReplies(r.Context(), commentId)
 
 	if err != nil {
-		errResponse(401, w, fmt.Sprintf("error %v", err))
+		utils.ErrResponse(401, w, fmt.Sprintf("error %v", err))
 		return
 	}
 
-	jsonResponse(200, w, handleRepliesToReplies(replies))
+	utils.JsonResponse(200, w, utils.HandleRepliesToReplies(replies))
 }
 
-func (apiCfg apiCfg) likeReply(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg ReplyHandler) LikeReply(w http.ResponseWriter, r *http.Request, username string) {
 	stringID := chi.URLParam(r, "replyID")
 
 	replyID, err := uuid.Parse(stringID)
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("error %v:", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("error %v:", err))
 		return
 	}
 
@@ -149,14 +154,14 @@ func (apiCfg apiCfg) likeReply(w http.ResponseWriter, r *http.Request, username 
 	})
 
 	if likesErr != nil {
-		errResponse(403, w, fmt.Sprintf("error %v:", likesErr))
+		utils.ErrResponse(403, w, fmt.Sprintf("error %v:", likesErr))
 		return
 	}
 
 	response, err := apiCfg.DB.UpdateReplyLikesCountIncrease(r.Context(), replyID)
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("error %v:", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("error %v:", err))
 		return
 	}
 
@@ -164,26 +169,26 @@ func (apiCfg apiCfg) likeReply(w http.ResponseWriter, r *http.Request, username 
 		ID:                  uuid.New(),
 		SenderUsername:      username,
 		ReceiverUsername:    response.Username,
-		Content:             fmt.Sprintf("@%v likes your reply %s", username, trimToMaxChars(response.ReplyText, 100)),
+		Content:             fmt.Sprintf("@%v likes your reply %s", username, utils.TrimToMaxChars(response.ReplyText, 100)),
 		NotificationsSource: "reply-likes",
 		Reference:           stringID,
 		CreatedAt:           time.Now(),
 	})
 
-	jsonResponse(200, w, Response{
+	utils.JsonResponse(200, w, utils.Response{
 		Status:  "success",
 		Message: "likes added successfully",
 		Payload: response.LikesCount,
 	})
 }
 
-func (apiCfg apiCfg) unLikeReply(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg ReplyHandler) UnLikeReply(w http.ResponseWriter, r *http.Request, username string) {
 	stringID := chi.URLParam(r, "postID")
 
 	replyID, err := uuid.Parse(stringID)
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("error %v:", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("error %v:", err))
 		return
 	}
 
@@ -193,14 +198,14 @@ func (apiCfg apiCfg) unLikeReply(w http.ResponseWriter, r *http.Request, usernam
 	})
 
 	if likesErr != nil {
-		errResponse(403, w, fmt.Sprintf("error %v:", likesErr))
+		utils.ErrResponse(403, w, fmt.Sprintf("error %v:", likesErr))
 		return
 	}
 
 	response, err := apiCfg.DB.UpdateReplyLikesCountDecrease(r.Context(), replyID)
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("error %v:", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("error %v:", err))
 		return
 	}
 
@@ -210,14 +215,14 @@ func (apiCfg apiCfg) unLikeReply(w http.ResponseWriter, r *http.Request, usernam
 		NotificationsSource: "reply-likes",
 	})
 
-	jsonResponse(200, w, Response{
+	utils.JsonResponse(200, w, utils.Response{
 		Status:  "success",
 		Message: "likes removed successfully",
 		Payload: response.LikesCount,
 	})
 }
 
-func (apiCfg apiCfg) editReply(w http.ResponseWriter, r *http.Request, username string) {
+func (apiCfg ReplyHandler) EditReply(w http.ResponseWriter, r *http.Request, username string) {
 	decorder := json.NewDecoder(r.Body)
 
 	params := ReplyStruct{}
@@ -229,7 +234,7 @@ func (apiCfg apiCfg) editReply(w http.ResponseWriter, r *http.Request, username 
 	replyId, err := uuid.Parse(stringId)
 
 	if err != nil {
-		errResponse(403, w, fmt.Sprintf("error %v", err))
+		utils.ErrResponse(403, w, fmt.Sprintf("error %v", err))
 		return
 	}
 
@@ -240,11 +245,11 @@ func (apiCfg apiCfg) editReply(w http.ResponseWriter, r *http.Request, username 
 	})
 
 	if replyErr != nil {
-		errResponse(401, w, fmt.Sprintf("error %v", replyErr))
+		utils.ErrResponse(401, w, fmt.Sprintf("error %v", replyErr))
 		return
 	}
 
-	jsonResponse(200, w, Response{
+	utils.JsonResponse(200, w, utils.Response{
 		Status:  "success",
 		Message: "reply successful",
 	})
