@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/loyalsfc/fledge-backend/controllers/notification"
 	"github.com/loyalsfc/fledge-backend/internal/database"
 	"github.com/loyalsfc/fledge-backend/utils"
 )
@@ -43,7 +42,7 @@ func (apiCfg FollowHandler) Follow(w http.ResponseWriter, r *http.Request, usern
 	user, err := apiCfg.DB.GetUserById(r.Context(), params.Following)
 
 	if err == nil {
-		notification.NotificationHandler.CreateNotification(notification.NotificationHandler{}, database.InsertNotificationParams{
+		apiCfg.DB.InsertNotification(r.Context(), database.InsertNotificationParams{
 			ID:                  uuid.New(),
 			SenderUsername:      username,
 			ReceiverUsername:    user.Username,
@@ -128,7 +127,7 @@ func (apiCfg FollowHandler) Unfollow(w http.ResponseWriter, r *http.Request, use
 		return
 	}
 
-	notification.NotificationHandler.RemoveNotification(notification.NotificationHandler{}, database.RemoveNotificationParams{
+	apiCfg.DB.RemoveNotification(r.Context(), database.RemoveNotificationParams{
 		SenderUsername:      username,
 		Reference:           params.Following.String(),
 		NotificationsSource: "follow",
