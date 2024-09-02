@@ -33,21 +33,27 @@ ORDER BY p.created_at DESC;
 
 -- name: GetFeedPosts :many
 SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, p.is_shared_post, p.shared_post_id, u.name, u.profile_picture, u.is_verified,
-    array_agg(l.username) AS liked_users_username,
-    array_agg(b.username) AS bookmarked_users_username
+    COALESCE(array_agg(DISTINCT l.username), '{}') AS liked_users_username,
+    COALESCE(array_agg(DISTINCT b.username), '{}') AS bookmarked_users_username
 FROM posts p
 INNER JOIN users u ON p.user_id = u.id
 LEFT JOIN likes l ON p.id = l.post_id
 LEFT JOIN bookmarks b ON p.id = b.post_id
 LEFT JOIN followers f ON p.user_id = f.following_id
-WHERE f.follower_id = $1 OR p.user_id = $1
+LEFT JOIN blocks bl ON p.user_id = bl.blocked_id
+WHERE (f.follower_id = $1 OR p.user_id = $1)
+AND NOT EXISTS (
+    SELECT 1
+    FROM blocks
+    WHERE (blocker_id = $1 AND blocked_id = p.user_id) OR (blocker_id = p.user_id AND blocked_id = $1)
+)
 GROUP BY p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, p.is_shared_post, p.shared_post_id, u.name, u.profile_picture, u.is_verified
 ORDER BY p.created_at DESC;
 
 -- name: GetBookmarkedPosts :many
 SELECT p.id, p.user_id, p.content, p.media, p.username, p.created_at, p.updated_at, p.likes_count, p.comment_count, p.bookmarks_count, p.share_count, p.is_shared_post, p.shared_post_id, u.name, u.profile_picture, u.is_verified,
-    array_agg(l.username) AS liked_users_username,
-    array_agg(b.username) AS bookmarked_users_username
+    COALESCE(array_agg(DISTINCT l.username), '{}') AS liked_users_username,
+    COALESCE(array_agg(DISTINCT b.username), '{}') AS bookmarked_users_username
 FROM posts p
 INNER JOIN users u ON p.user_id = u.id
 LEFT JOIN likes l ON p.id = l.post_id

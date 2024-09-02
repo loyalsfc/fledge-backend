@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"github.com/loyalsfc/fledge-backend/controllers/block"
 	"github.com/loyalsfc/fledge-backend/controllers/bookmarks"
 	"github.com/loyalsfc/fledge-backend/controllers/comment"
 	"github.com/loyalsfc/fledge-backend/controllers/follow"
@@ -126,6 +127,14 @@ func main() {
 	}
 	v1Router.Get("/notifications", middlewareAuth.MiddlewareAuth(notificationHandler.GetUserNotifications))
 	v1Router.Put("/update-notification", middlewareAuth.MiddlewareAuth(notificationHandler.MarkNotificationAsRead))
+
+	blockHandler := block.BlockHandler{
+		DB: db,
+	}
+
+	v1Router.Post("/block", middlewareAuth.MiddlewareAuth(blockHandler.Block))
+	v1Router.Post("/unblock", middlewareAuth.MiddlewareAuth(blockHandler.UnBlock))
+	v1Router.Get("/block-list/{userID}", middlewareAuth.MiddlewareAuth(blockHandler.GetBlocks))
 
 	router.Mount("/v1", v1Router)
 

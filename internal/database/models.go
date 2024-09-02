@@ -12,6 +12,11 @@ import (
 	"github.com/google/uuid"
 )
 
+type Block struct {
+	BlockerID uuid.UUID
+	BlockedID uuid.UUID
+}
+
 type Bookmark struct {
 	Username string
 	PostID   uuid.UUID
