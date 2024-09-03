@@ -59,6 +59,23 @@ func (q *Queries) GetBlocked(ctx context.Context, blockerID uuid.UUID) ([]uuid.U
 	return items, nil
 }
 
+const getBlockedUser = `-- name: GetBlockedUser :one
+SELECT blocker_id, blocked_id FROM blocks
+WHERE blocker_id = $1 AND blocked_id = $2
+`
+
+type GetBlockedUserParams struct {
+	BlockerID uuid.UUID
+	BlockedID uuid.UUID
+}
+
+func (q *Queries) GetBlockedUser(ctx context.Context, arg GetBlockedUserParams) (Block, error) {
+	row := q.db.QueryRowContext(ctx, getBlockedUser, arg.BlockerID, arg.BlockedID)
+	var i Block
+	err := row.Scan(&i.BlockerID, &i.BlockedID)
+	return i, err
+}
+
 const unblock = `-- name: Unblock :exec
 DELETE FROM blocks
 WHERE blocker_id = $1 AND blocked_id = $2

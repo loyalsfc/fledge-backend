@@ -102,6 +102,39 @@ func (apiCfg PostHandler) GetPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	urlQuery := r.URL.Query()
+
+	requestUser, ok := urlQuery["userId"]
+
+	//if the userId id query is not found return the post response
+	if !ok {
+		utils.JsonResponse(200, w, utils.HandlePostToPost(post))
+		return
+	}
+	requestUserId, err := uuid.Parse(requestUser[0])
+
+	if err != nil {
+		utils.ErrResponse(401, w, "error: an error occured")
+		return
+	}
+
+	//check if the user is the owner of the post return the post
+	if post.UserID == requestUserId {
+		utils.JsonResponse(200, w, utils.HandlePostToPost(post))
+		return
+	}
+
+	//check if the user has been blocked by the poster
+	_, blockErr := apiCfg.DB.GetBlockedUser(r.Context(), database.GetBlockedUserParams{
+		BlockerID: post.UserID,
+		BlockedID: requestUserId,
+	})
+
+	if blockErr == nil {
+		utils.ErrResponse(401, w, "post restricted")
+		return
+	}
+
 	utils.JsonResponse(200, w, utils.HandlePostToPost(post))
 }
 

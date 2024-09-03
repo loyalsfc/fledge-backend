@@ -14,3 +14,7 @@ WHERE blocker_id = $1 AND blocked_id = $2;
 -- name: GetBlocked :many
 SELECT blocked_id FROM blocks
 WHERE blocker_id = $1;
+
+-- name: GetBlockedUser :one
+SELECT * FROM blocks
+WHERE blocker_id = $1 AND blocked_id = $2;
