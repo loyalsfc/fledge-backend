@@ -24,11 +24,7 @@ import (
 )
 
 func main() {
-	err := godotenv.Load()
-
-	if err != nil {
-		log.Fatal("Error loading .env")
-	}
+	godotenv.Load()
 
 	dbString := os.Getenv("DB_STRING")
 
@@ -137,6 +133,9 @@ func main() {
 	v1Router.Get("/block-list/{userID}", middlewareAuth.MiddlewareAuth(blockHandler.GetBlocks))
 
 	router.Mount("/v1", v1Router)
+	router.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	})
 
 	http.ListenAndServe(":3333", router)
 }
